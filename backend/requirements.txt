@@ -1,0 +1,23 @@
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+duckdb>=0.10.0
+hdbscan>=0.8.38
+h3>=3.7.7
+osmnx>=1.9.1
+prophet>=1.1.5
+scikit-learn>=1.4.0
+geopandas>=0.14.0
+pandas>=2.2.0
+pyarrow>=14.0.0
+numpy>=1.26.0
+scipy>=1.13.0
+joblib>=1.4.0
+openai>=1.30.0
+anthropic>=0.28.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+pydantic>=2.7.0
+shapely>=2.0.4
+
+# Optional GPU (RTX 4060): install via conda, not pip on Windows
+# conda install -c rapidsai -c conda-forge -c nvidia cuml=24.10 cuda-version=12.0

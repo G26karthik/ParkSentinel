@@ -1,0 +1,14 @@
+# Secrets — never commit API keys
+.env
+.env.local
+*.env
+
+# Throwaway / test databases
+cache/query_test.duckdb
+cache/query_test.duckdb.wal
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
