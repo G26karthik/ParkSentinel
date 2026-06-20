@@ -61,8 +61,8 @@ export default function DashboardPage() {
     <div className="relative h-full">
       {/* Header overlay */}
       <div className="absolute top-0 left-0 right-0 z-20 p-4 space-y-3 pointer-events-none">
-        <div className="flex flex-wrap items-start gap-3 pointer-events-auto">
-          <div className="flex flex-wrap gap-2 flex-1">
+        <div className="flex flex-col md:flex-row items-start gap-3 pointer-events-auto w-full max-w-full">
+          <div className="flex flex-row overflow-x-auto snap-x no-scrollbar gap-2 flex-1 w-full md:w-auto md:flex-wrap pb-2 md:pb-0 [&>*]:shrink-0 [&>*]:snap-start">
             {stats && (
               <>
                 <StatCard
@@ -85,7 +85,7 @@ export default function DashboardPage() {
               </>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full md:w-auto overflow-x-auto">
             <TimeFilter month={month} onChange={setMonth} />
             <LayerToggle mode={layerMode} onChange={setLayerMode} />
           </div>

@@ -88,7 +88,7 @@ export default function AnalyticsPage() {
         <p className="text-gray-400 text-sm mt-1">Bengaluru parking violation patterns Nov 2023 – Apr 2024</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ChartCard title="Violations by Hour of Day">
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={hourly}>
@@ -117,7 +117,7 @@ export default function AnalyticsPage() {
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={monthly}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="month_year" tick={{ fill: "#9ca3af", fontSize: 11 }} />
+              <XAxis dataKey="month_year" tick={{ fill: "#9ca3af", fontSize: 11 }} interval={0} />
               <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} />
               <Tooltip contentStyle={{ background: "#1f2937", border: "none" }} />
               <Line type="monotone" dataKey="count" stroke="#60a5fa" strokeWidth={2} dot />
@@ -136,7 +136,7 @@ export default function AnalyticsPage() {
                 cy="50%"
                 outerRadius={80}
                 label={({ name, percent }: { name: string; percent: number }) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`
+                  percent >= 0.03 ? `${name} ${(percent * 100).toFixed(0)}%` : ""
                 }
                 labelLine={false}
               >

@@ -65,7 +65,7 @@ function ForecastContent() {
           <select
             value={selected}
             onChange={(e) => setSelected(e.target.value)}
-            className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm"
+            className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm w-full md:w-auto"
           >
             {forecasts.map((f) => (
               <option key={f.h3_cell} value={f.h3_cell}>
