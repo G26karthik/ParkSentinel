@@ -85,7 +85,7 @@ export default function AnalyticsPage() {
     <div className="p-6 space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-white">Analytics</h1>
-        <p className="text-gray-400 text-sm mt-1">Bengaluru parking violation patterns Nov 2023 – Apr 2024</p>
+        <p className="text-gray-400 text-sm mt-1">Bengaluru parking violation patterns Nov 2023 – Mar 2024</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -123,6 +123,9 @@ export default function AnalyticsPage() {
               <Line type="monotone" dataKey="count" stroke="#60a5fa" strokeWidth={2} dot />
             </LineChart>
           </ResponsiveContainer>
+          <p className="text-[10px] text-gray-500 mt-2 leading-relaxed">
+            *Note: February (1,719 approved / 3.1% rate) and March (7,038 approved / 12.7% rate) show artificially low counts due to a data validation backlog in the raw police dataset.
+          </p>
         </ChartCard>
 
         <ChartCard title="Vehicle Type Distribution">

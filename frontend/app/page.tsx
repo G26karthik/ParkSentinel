@@ -66,7 +66,7 @@ export default function DashboardPage() {
             {stats && (
               <>
                 <StatCard
-                  label="Total Violations"
+                  label="Validated Violations"
                   value={stats.total_approved.toLocaleString()}
                 />
                 <StatCard
@@ -90,8 +90,13 @@ export default function DashboardPage() {
             <LayerToggle mode={layerMode} onChange={setLayerMode} />
           </div>
         </div>
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto space-y-2">
           <AnomalyBanner anomalies={anomalies} selectedMonth={month} />
+          {(month === "2024-02" || month === "2024-03") && (
+            <div className="bg-yellow-600/20 border border-yellow-600/50 text-yellow-200 px-4 py-2.5 rounded-lg text-xs md:text-sm max-w-xl backdrop-blur">
+              ⚠️ <strong>Data Validation Backlog:</strong> {month === "2024-02" ? "February 2024" : "March 2024"} has an administrative backlog (only {month === "2024-02" ? "1,719" : "7,038"} approved of {month === "2024-02" ? "54,660" : "55,455"} raw records). Trend drops are reporting anomalies, not a physical decline.
+            </div>
+          )}
         </div>
       </div>
 
