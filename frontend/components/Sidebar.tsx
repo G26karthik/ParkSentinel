@@ -78,8 +78,31 @@ export default function Sidebar() {
             );
           })}
         </nav>
-        <div className="p-4 border-t border-gray-800 text-xs text-gray-500 shrink-0">
-          Gridlock Hackathon 2.0
+        <div className="p-4 border-t border-gray-800 text-xs space-y-2 shrink-0 bg-gray-950/40">
+          <div className="text-gray-500 font-semibold uppercase tracking-wider text-[10px]">Partner Integrations</div>
+          <div className="flex flex-col gap-1 text-[11px] text-gray-400">
+            <div className="flex items-center justify-between">
+              <span>BTP Traffic Feed</span>
+              <span className="flex items-center gap-1 text-green-500 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Live
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>ASTRAM Engine</span>
+              <span className="flex items-center gap-1 text-green-500 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> Linked
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>MapMyIndia Tiles</span>
+              <span className="flex items-center gap-1 text-gray-500">
+                Fallback
+              </span>
+            </div>
+          </div>
+          <div className="pt-2 text-[10px] text-gray-600 border-t border-gray-800/60">
+            ParkSentinel v1.2 (BTP Control)
+          </div>
         </div>
       </aside>
     </>

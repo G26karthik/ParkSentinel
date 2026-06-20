@@ -2,13 +2,13 @@
 
 import { useMemo } from "react";
 import DeckGL from "@deck.gl/react";
-import { ScatterplotLayer, TextLayer } from "@deck.gl/layers";
+import { ScatterplotLayer, TextLayer, PathLayer } from "@deck.gl/layers";
 import Map from "react-map-gl/maplibre";
 import { EnforcementItem, cisColor } from "@/lib/api";
 
 const BENGALURU = { longitude: 77.5946, latitude: 12.9716, zoom: 10, pitch: 0, bearing: 0 };
 
-export default function EnforcementMiniMap({ items }: { items: EnforcementItem[] }) {
+export default function EnforcementMiniMap({ items, showRoute = false }: { items: EnforcementItem[]; showRoute?: boolean }) {
   const initialViewState = useMemo(() => {
     const pts = items.filter((i) => i.centroid_lat && i.centroid_lon);
     if (pts.length === 0) return BENGALURU;
@@ -18,35 +18,65 @@ export default function EnforcementMiniMap({ items }: { items: EnforcementItem[]
   }, [items]);
 
   const layers = useMemo(
-    () => [
-      new ScatterplotLayer({
-        id: "enf-zones",
-        data: items,
-        getPosition: (d: EnforcementItem) => [d.centroid_lon, d.centroid_lat],
-        getRadius: (d: EnforcementItem) => 150 + d.cis * 8,
-        radiusMinPixels: 8,
-        radiusMaxPixels: 28,
-        stroked: true,
-        getFillColor: (d: EnforcementItem) => cisColor(d.classification),
-        getLineColor: [255, 255, 255, 220],
-        lineWidthMinPixels: 1.5,
-        pickable: true,
-      }),
-      new TextLayer({
-        id: "enf-rank",
-        data: items,
-        getPosition: (d: EnforcementItem) => [d.centroid_lon, d.centroid_lat],
-        getText: (d: EnforcementItem) => String(d.rank),
-        getSize: 11,
-        sizeUnits: "pixels",
-        getColor: [255, 255, 255, 255],
-        fontWeight: 700,
-        getTextAnchor: "middle",
-        getAlignmentBaseline: "center",
-        billboard: true,
-      }),
-    ],
-    [items]
+    () => {
+      const list = [
+        new ScatterplotLayer({
+          id: "enf-zones",
+          data: items,
+          getPosition: (d: EnforcementItem) => [d.centroid_lon, d.centroid_lat],
+          getRadius: (d: EnforcementItem) => 150 + d.cis * 8,
+          radiusMinPixels: 8,
+          radiusMaxPixels: 28,
+          stroked: true,
+          getFillColor: (d: EnforcementItem) => cisColor(d.classification),
+          getLineColor: [255, 255, 255, 220],
+          lineWidthMinPixels: 1.5,
+          pickable: true,
+        }),
+        new TextLayer({
+          id: "enf-rank",
+          data: items,
+          getPosition: (d: EnforcementItem) => [d.centroid_lon, d.centroid_lat],
+          getText: (d: EnforcementItem) => String(d.rank),
+          getSize: 11,
+          sizeUnits: "pixels",
+          getColor: [255, 255, 255, 255],
+          fontWeight: 700,
+          getTextAnchor: "middle",
+          getAlignmentBaseline: "center",
+          billboard: true,
+        }),
+      ];
+
+      if (showRoute && items.length > 1) {
+        const sortedPts = [...items]
+          .filter((i) => i.centroid_lon && i.centroid_lat)
+          .sort((a, b) => a.rank - b.rank);
+        
+        if (sortedPts.length > 1) {
+          list.push(
+            new PathLayer({
+              id: "patrol-route-line",
+              data: [
+                {
+                  path: sortedPts.map((p) => [p.centroid_lon, p.centroid_lat]),
+                },
+              ],
+              getPath: (d: any) => d.path,
+              getColor: [239, 68, 68, 220], // Red glowing path
+              getWidth: 6,
+              widthMinPixels: 4,
+              widthMaxPixels: 10,
+              rounded: true,
+              pickable: false,
+            }) as any
+          );
+        }
+      }
+
+      return list;
+    },
+    [items, showRoute]
   );
 
   return (
