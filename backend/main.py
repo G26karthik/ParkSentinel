@@ -321,6 +321,19 @@ async def get_h3_grid(
     return H3GridResponse(features=features)
 
 
+def _resolve_zone_name(h3_cell: str, h3_df: pd.DataFrame) -> str:
+    if h3_df.empty:
+        return h3_cell
+    match = h3_df[h3_df["h3_cell"] == h3_cell]
+    if match.empty:
+        return h3_cell
+    row = match.iloc[0]
+    zone_name = row.get("junction_proximity") or row.get("police_station") or h3_cell
+    if row.get("is_junction_cell") or (isinstance(zone_name, str) and zone_name == 'No Junction'):
+        zone_name = f"H3 Zone near {row.get('police_station', 'Bengaluru')}"
+    return str(zone_name)
+
+
 # NOTE: the static /forecast/top route MUST be declared before the dynamic
 # /forecast/{h3_cell} route, otherwise "top" is captured as an h3_cell and 404s.
 @app.get("/forecast/top", response_model=TopForecastResponse)
@@ -334,6 +347,7 @@ async def get_top_cell_forecasts():
                 h3_cell=f["h3_cell"],
                 forecast=f.get("forecast", []),
                 historical=f.get("historical", []),
+                zone_name=_resolve_zone_name(f["h3_cell"], h3_df),
             )
             for f in top
         ]
@@ -343,6 +357,7 @@ async def get_top_cell_forecasts():
 @app.get("/forecast/{h3_cell}", response_model=ForecastResponse)
 async def get_cell_forecast(h3_cell: str):
     forecasts = _state.get("forecasts", {})
+    h3_df = _state.get("h3_df", pd.DataFrame())
     data = get_forecast(forecasts, h3_cell)
     if not data:
         raise HTTPException(status_code=404, detail=f"No forecast for cell {h3_cell}")
@@ -350,6 +365,7 @@ async def get_cell_forecast(h3_cell: str):
         h3_cell=h3_cell,
         forecast=data.get("forecast", []),
         historical=data.get("historical", []),
+        zone_name=_resolve_zone_name(h3_cell, h3_df),
     )
 
 

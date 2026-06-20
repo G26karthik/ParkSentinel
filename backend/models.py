@@ -82,6 +82,7 @@ class ForecastResponse(BaseModel):
     h3_cell: str
     forecast: list[ForecastPoint]
     historical: list[dict[str, Any]] = Field(default_factory=list)
+    zone_name: str | None = None
 
 
 class TopForecastResponse(BaseModel):
