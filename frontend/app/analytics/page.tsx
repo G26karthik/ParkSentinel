@@ -90,8 +90,8 @@ export default function AnalyticsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ChartCard title="Violations by Hour of Day">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={hourly}>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={hourly} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="hour" tick={{ fill: "#9ca3af", fontSize: 11 }} />
               <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} />
@@ -102,8 +102,8 @@ export default function AnalyticsPage() {
         </ChartCard>
 
         <ChartCard title="Violations by Day of Week">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={dow}>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={dow} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="day_name" tick={{ fill: "#9ca3af", fontSize: 11 }} />
               <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} />
@@ -114,8 +114,8 @@ export default function AnalyticsPage() {
         </ChartCard>
 
         <ChartCard title="Monthly Violation Trend">
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={monthly}>
+          <ResponsiveContainer width="100%" height={260}>
+            <LineChart data={monthly} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="month_year" tick={{ fill: "#9ca3af", fontSize: 11 }} interval={0} />
               <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} />
@@ -129,7 +129,7 @@ export default function AnalyticsPage() {
         </ChartCard>
 
         <ChartCard title="Vehicle Type Distribution">
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={260}>
             <PieChart>
               <Pie
                 data={vehicles}
@@ -153,8 +153,8 @@ export default function AnalyticsPage() {
         </ChartCard>
 
         <ChartCard title="Top 15 Police Stations">
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={stations} layout="vertical" margin={{ left: 80 }}>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={stations} layout="vertical" margin={{ top: 10, right: 20, left: 80, bottom: 10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis type="number" tick={{ fill: "#9ca3af", fontSize: 11 }} />
               <YAxis
@@ -170,8 +170,8 @@ export default function AnalyticsPage() {
         </ChartCard>
 
         <ChartCard title="Violation Type Distribution">
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={violations} layout="vertical" margin={{ left: 120 }}>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={violations} layout="vertical" margin={{ top: 10, right: 20, left: 120, bottom: 10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis type="number" tick={{ fill: "#9ca3af", fontSize: 11 }} />
               <YAxis
@@ -188,13 +188,14 @@ export default function AnalyticsPage() {
       </div>
 
       <ChartCard title="Daily Violations with Anomaly Detection">
-        <ResponsiveContainer width="100%" height={240}>
-          <ComposedChart data={dailyWithAnomaly}>
+        <ResponsiveContainer width="100%" height={350}>
+          <ComposedChart data={dailyWithAnomaly} margin={{ top: 15, right: 20, left: 10, bottom: 25 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis
               dataKey="violation_date"
               tick={{ fill: "#9ca3af", fontSize: 9 }}
               tickFormatter={(v) => v.slice(5)}
+              minTickGap={20}
             />
             <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} />
             <Tooltip contentStyle={{ background: "#1f2937", border: "none" }} />

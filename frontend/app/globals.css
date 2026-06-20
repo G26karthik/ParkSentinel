@@ -11,3 +11,79 @@ body {
 .maplibregl-map {
   font-family: inherit;
 }
+
+@media print {
+  /* Hide sidebar, headers, controls, and buttons */
+  aside,
+  button,
+  select,
+  input,
+  .no-print,
+  .md\:hidden {
+    display: none !important;
+  }
+
+  /* Unbind height constraints to print multiple pages */
+  html, body, #__next, .flex, main, div[class*="h-screen"], div[class*="overflow-hidden"], main[class*="overflow-auto"] {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    position: static !important;
+    display: block !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Keep colors intact in print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-scheme: dark !important;
+  }
+
+  /* Make map size consistent on print */
+  .relative.h-64 {
+    height: 380px !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 20px !important;
+  }
+
+  /* Ensure summary cards / banner display correctly */
+  .bg-red-900\/20 {
+    border: 1px solid #7f1d1d !important;
+    background-color: rgba(127, 29, 29, 0.1) !important;
+    color: #fca5a5 !important;
+    padding: 12px !important;
+    border-radius: 8px !important;
+    margin-bottom: 20px !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Table styling for print */
+  table {
+    page-break-inside: auto !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    background-color: #111827 !important;
+    border: 1px solid #1f2937 !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+    background-color: #1f2937 !important;
+  }
+
+  th, td {
+    border: 1px solid #1f2937 !important;
+    padding: 8px !important;
+  }
+}

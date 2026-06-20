@@ -9,7 +9,7 @@ function ForecastContent() {
   const searchParams = useSearchParams();
   const cellParam = searchParams.get("cell");
   const [forecasts, setForecasts] = useState<
-    { h3_cell: string; forecast: unknown[]; historical: unknown[] }[]
+    { h3_cell: string; forecast: unknown[]; historical: unknown[]; zone_name?: string }[]
   >([]);
   const [selected, setSelected] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -65,18 +65,18 @@ function ForecastContent() {
           <select
             value={selected}
             onChange={(e) => setSelected(e.target.value)}
-            className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm w-full md:w-auto"
+            className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm w-full md:w-auto font-medium"
           >
             {forecasts.map((f) => (
               <option key={f.h3_cell} value={f.h3_cell}>
-                {f.h3_cell}
+                {f.zone_name ? `${f.zone_name} (${f.h3_cell})` : f.h3_cell}
               </option>
             ))}
           </select>
 
           {current && (
             <ForecastChart
-              title={`Zone ${selected}`}
+              title={current.zone_name ? `${current.zone_name} (${selected})` : `Zone ${selected}`}
               historical={current.historical as { ds: string; y: number }[]}
               forecast={current.forecast as { ds: string; yhat: number; yhat_lower: number; yhat_upper: number }[]}
             />
@@ -108,7 +108,7 @@ function ForecastContent() {
                 </tbody>
               </table>
               <p className="text-gray-400 text-xs mt-4">
-                Zone {selected} expected to peak on high-risk days — recommend pre-emptive deployment.
+                {current?.zone_name ? `${current.zone_name} (${selected})` : `Zone ${selected}`} expected to peak on high-risk days — recommend pre-emptive deployment.
               </p>
             </div>
           )}

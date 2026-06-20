@@ -94,8 +94,8 @@ export const getSummaryByVehicle = () => fetchApi<{ vehicle_type: string; violat
 export const getSummaryByViolationType = () => fetchApi<{ violation_type: string; count: number }[]>("/summary/by-violation-type");
 export const getDailyTrend = () => fetchApi<{ violation_date: string; count: number }[]>("/summary/daily");
 export const getTopJunctions = () => fetchApi<{ junction_name: string; violation_count: number; lat: number; lon: number }[]>("/summary/junctions");
-export const getTopForecasts = () => fetchApi<{ forecasts: { h3_cell: string; forecast: unknown[]; historical: unknown[] }[] }>("/forecast/top");
-export const getForecast = (h3Cell: string) => fetchApi<{ h3_cell: string; forecast: unknown[]; historical: unknown[] }>(`/forecast/${h3Cell}`);
+export const getTopForecasts = () => fetchApi<{ forecasts: { h3_cell: string; forecast: unknown[]; historical: unknown[]; zone_name?: string }[] }>("/forecast/top");
+export const getForecast = (h3Cell: string) => fetchApi<{ h3_cell: string; forecast: unknown[]; historical: unknown[]; zone_name?: string }>(`/forecast/${h3Cell}`);
 
 export async function postQuery(question: string) {
   const res = await fetch(`${API_BASE}/query`, {

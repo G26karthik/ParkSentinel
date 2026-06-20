@@ -88,14 +88,8 @@ export default function DashboardPage() {
           <div className="flex gap-2 w-full md:w-auto overflow-x-auto items-center">
             <TimeFilter month={month} onChange={setMonth} />
             <LayerToggle mode={layerMode} onChange={setLayerMode} />
-            <div className="hidden lg:flex items-center gap-2 bg-gray-900/90 border border-gray-700 rounded-lg px-3 py-2 text-[10px] font-bold uppercase tracking-wider backdrop-blur text-gray-300 select-none shrink-0">
-              <span className="text-red-500 font-extrabold">ASTRAM</span>
-              <span className="text-gray-600 font-normal">|</span>
-              <span className="text-blue-400">MapMyIndia</span>
-              <span className="text-gray-600 font-normal">|</span>
-              <span className="text-green-500 flex items-center gap-1 font-semibold">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" /> BTP Control
-              </span>
+            <div className="hidden lg:flex items-center gap-2 bg-gray-900/90 border border-gray-700 rounded-lg px-3 py-2 text-[10px] font-bold uppercase tracking-wider backdrop-blur text-gray-400 select-none shrink-0">
+              Designed for ASTRAM/BTP integration (not yet connected)
             </div>
           </div>
         </div>
