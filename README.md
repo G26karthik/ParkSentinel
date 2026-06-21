@@ -164,6 +164,15 @@ uvicorn main:app --reload
 4. **Forecast** — proactive 14-day violation prediction
 5. **Ask AI** — "Which junction has the most HGV violations?"
 
+## Cloud Deployment (Render Free Tier Workaround)
+
+If you are deploying the backend to Render's **Free Tier**, you will likely encounter an `Out of memory (used over 512Mi)` error during startup. Loading 115k records into DuckDB and running HDBSCAN clustering requires more than the 512MB RAM provided.
+
+**The Fix:** We bypass the memory limit by pushing the locally pre-computed ML cache directly to GitHub.
+1. The CSV dataset must be compressed (`jan_to_may_police_violation_anonymized791b166.csv.gz`) to bypass GitHub's 100MB file limit. DuckDB natively reads `.gz` files.
+2. The `cache/` directory (specifically `pipeline_state.pkl` and `parksentinel.duckdb`) must be forcefully added to git and pushed.
+3. Upon deployment, the FastAPI backend will detect the `pipeline_state.pkl` cache and **skip the heavy ML crunching entirely**, booting instantly and using minimal memory.
+
 ## License
 
 Built for Gridlock Hackathon 2.0 prototype phase.
