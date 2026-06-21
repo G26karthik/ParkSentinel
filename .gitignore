@@ -1,5 +1,9 @@
 cache/
 data/*.csv
 backend/__pycache__/
+backend/.env
+backend/.venv*/
 frontend/node_modules/
 frontend/.next/
+pipeline_output/
+*.pkl

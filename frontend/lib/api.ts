@@ -55,13 +55,16 @@ export interface AnomalyRecord {
   likely_cause: string;
 }
 
-async function fetchApi<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, { cache: "no-store" });
+async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    next: { revalidate: 3600 },
+    ...init,
+  } as RequestInit);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
 
-export const getHealth = () => fetchApi<{ status: string; records_loaded: number }>("/health");
+export const getHealth = () => fetchApi<{ status: string; records_loaded: number }>("/health", { cache: "no-store" });
 export const getSummaryStats = () => fetchApi<SummaryStats>("/summary/stats");
 export const getH3Grid = (month?: string, minCount = 5) => {
   const params = new URLSearchParams({ min_count: String(minCount) });
@@ -102,6 +105,7 @@ export async function postQuery(question: string) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question }),
+    cache: "no-store",
   });
   return res.json();
 }

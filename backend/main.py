@@ -196,10 +196,21 @@ app.add_middleware(
 )
 
 
+_CACHED_PREFIXES = (
+    "/hotspots", "/h3-grid", "/summary/", "/enforcement-plan",
+    "/forecast/", "/anomalies", "/heatmap-data",
+)
+
+
 @app.middleware("http")
-async def add_product_header(request: Request, call_next):
+async def add_cache_and_product_headers(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Product"] = PRODUCT_NAME
+    path = request.url.path
+    if any(path == p or path.startswith(p) for p in _CACHED_PREFIXES):
+        response.headers["Cache-Control"] = (
+            "public, max-age=3600, stale-while-revalidate=86400"
+        )
     return response
 
 

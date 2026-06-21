@@ -3,7 +3,8 @@
 Provider selection priority (harness engineering):
     1. Gemini   - if GEMINI_API_KEY is set (primary, REST API)
     2. OpenAI   - if OPENAI_API_KEY is set (fallback)
-    3. (error)  - graceful failure with an actionable message
+    3. Groq     - if GROQ_API_KEY is set (second fallback, 1k RPD free)
+    4. (error)  - graceful failure with an actionable message
 
 Both free-tier keys are tightly quota-capped, so ``complete`` does NOT just run
 the primary provider and surface its error. It walks the provider chain in
@@ -78,6 +79,9 @@ GEMINI_ENDPOINT = (
 # in, $0.60/M out) on price. Override OPENAI_MODEL to switch models.
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-nano")
 
+# Groq: free 1,000 RPD on 70B model. Uses the OpenAI SDK with a custom base_url.
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+
 # Network / robustness knobs.
 LLM_TIMEOUT_SECONDS = float(os.getenv("LLM_TIMEOUT_SECONDS", "45"))
 LLM_HTTP_RETRIES = int(os.getenv("LLM_HTTP_RETRIES", "2"))
@@ -102,6 +106,8 @@ def get_provider_chain() -> list[str]:
         chain.append("gemini")
     if os.getenv("OPENAI_API_KEY"):
         chain.append("openai")
+    if os.getenv("GROQ_API_KEY"):
+        chain.append("groq")
     return chain
 
 
@@ -121,10 +127,12 @@ def provider_status() -> dict[str, object]:
         "provider_chain": get_provider_chain(),  # priority + failover order
         "gemini_configured": bool(os.getenv("GEMINI_API_KEY")),
         "openai_configured": bool(os.getenv("OPENAI_API_KEY")),
+        "groq_configured": bool(os.getenv("GROQ_API_KEY")),
         "anthropic_configured": bool(os.getenv("ANTHROPIC_API_KEY")),
         "anthropic_used": False,  # opted out — never selected
         "gemini_model": GEMINI_MODEL,
         "openai_model": OPENAI_MODEL,
+        "groq_model": GROQ_MODEL,
     }
 
 
@@ -201,6 +209,27 @@ def _call_openai(system_instruction: str, user_text: str, temperature: float) ->
     return resp.choices[0].message.content or ""
 
 
+# --- Groq (third fallback) ---------------------------------------------------
+
+def _call_groq(system_instruction: str, user_text: str, temperature: float) -> str:
+    from openai import OpenAI
+
+    client = OpenAI(
+        base_url="https://api.groq.com/openai/v1",
+        api_key=os.environ["GROQ_API_KEY"],
+        timeout=LLM_TIMEOUT_SECONDS,
+    )
+    resp = client.chat.completions.create(
+        model=GROQ_MODEL,
+        messages=[
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": user_text},
+        ],
+        temperature=temperature,
+    )
+    return resp.choices[0].message.content or ""
+
+
 # --- Anthropic (DORMANT — never selected) ------------------------------------
 
 def _call_anthropic(system_instruction: str, user_text: str, temperature: float) -> str:
@@ -221,6 +250,7 @@ def _call_anthropic(system_instruction: str, user_text: str, temperature: float)
 _DISPATCH: dict[str, Callable[[str, str, float], str]] = {
     "gemini": _call_gemini,
     "openai": _call_openai,
+    "groq": _call_groq,
     "anthropic": _call_anthropic,  # registered but never selected
 }
 
@@ -277,8 +307,8 @@ def complete(
     chain = get_provider_chain()
     if not chain:
         raise LLMError(
-            "No LLM API key configured. Set GEMINI_API_KEY (preferred) or "
-            "OPENAI_API_KEY in backend/.env"
+            "No LLM API key configured. Set GEMINI_API_KEY (preferred), "
+            "OPENAI_API_KEY, or GROQ_API_KEY in backend/.env"
         )
 
     errors: list[str] = []

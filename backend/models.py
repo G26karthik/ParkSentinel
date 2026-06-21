@@ -111,6 +111,10 @@ class EnforcementPlanResponse(BaseModel):
     total_officers: int
     zones_count: int
     items: list[EnforcementItem]
+    route_optimized: bool = False
+    estimated_travel_km: float = 0.0
+    naive_travel_km: float = 0.0
+    time_saved_pct: float = 0.0
 
 
 class AnomalyRecord(BaseModel):

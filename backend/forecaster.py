@@ -6,12 +6,65 @@ import logging
 from pathlib import Path
 from typing import Any
 
+import h3
 import joblib
 import pandas as pd
 
 from config import PROPHET_CACHE_PATH
 
 logger = logging.getLogger(__name__)
+
+
+def apply_spatial_smoothing(forecasts: dict[str, Any]) -> dict[str, Any]:
+    """Apply first-order spatial neighbor smoothing to Prophet forecasts.
+
+    For each forecasted zone, blends its own forecast with the mean of its
+    H3 neighbors' forecasts: smoothed = 0.7 * own + 0.3 * mean(neighbors).
+    Zones without forecasted neighbors keep raw Prophet values.
+    """
+    forecasted_cells = set(forecasts.keys())
+    if len(forecasted_cells) < 2:
+        return forecasts
+
+    smoothed = {}
+    for cell, data in forecasts.items():
+        if hasattr(h3, "grid_disk"):
+            neighbors = set(h3.grid_disk(cell, 1)) - {cell}
+        else:
+            neighbors = set(h3.k_ring(cell, 1)) - {cell}
+        neighbor_cells = neighbors & forecasted_cells
+        if not neighbor_cells:
+            smoothed[cell] = data
+            continue
+
+        own_fc = data["forecast"]
+        neighbor_forecasts = [forecasts[nc]["forecast"] for nc in neighbor_cells]
+
+        blended_fc = []
+        for day_idx, day in enumerate(own_fc):
+            neighbor_vals = []
+            for nf in neighbor_forecasts:
+                if day_idx < len(nf):
+                    neighbor_vals.append(nf[day_idx])
+            if not neighbor_vals:
+                blended_fc.append(day)
+                continue
+
+            mean_yhat = sum(nv["yhat"] for nv in neighbor_vals) / len(neighbor_vals)
+            mean_lower = sum(nv["yhat_lower"] for nv in neighbor_vals) / len(neighbor_vals)
+            mean_upper = sum(nv["yhat_upper"] for nv in neighbor_vals) / len(neighbor_vals)
+
+            blended_fc.append({
+                "ds": day["ds"],
+                "yhat": round(0.7 * day["yhat"] + 0.3 * mean_yhat, 4),
+                "yhat_lower": round(0.7 * day["yhat_lower"] + 0.3 * mean_lower, 4),
+                "yhat_upper": round(0.7 * day["yhat_upper"] + 0.3 * mean_upper, 4),
+            })
+
+        smoothed[cell] = {"forecast": blended_fc, "historical": data["historical"]}
+
+    logger.info("Spatial smoothing applied to %d cells", len(smoothed))
+    return smoothed
 
 
 def _build_daily_series(df: pd.DataFrame, h3_cell: str) -> pd.DataFrame:
@@ -85,9 +138,11 @@ def fit_prophet_forecasts(
         except Exception as e:
             logger.warning("Prophet failed for cell %s: %s", cell, e)
 
+    forecasts = apply_spatial_smoothing(forecasts)
+
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(forecasts, cache_path)
-    logger.info("Prophet forecasts computed for %d cells", len(forecasts))
+    logger.info("Prophet forecasts computed and smoothed for %d cells", len(forecasts))
     return forecasts
 
 
