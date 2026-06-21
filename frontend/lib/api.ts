@@ -84,9 +84,16 @@ export const getEnforcementPlan = (date?: string, policeStation?: string) => {
   const params = new URLSearchParams();
   if (date) params.set("date", date);
   if (policeStation) params.set("police_station", policeStation);
-  return fetchApi<{ date: string; total_officers: number; zones_count: number; items: EnforcementItem[] }>(
-    `/enforcement-plan?${params}`
-  );
+  return fetchApi<{
+    date: string;
+    total_officers: number;
+    zones_count: number;
+    items: EnforcementItem[];
+    route_optimized: boolean;
+    estimated_travel_km: number;
+    naive_travel_km: number;
+    time_saved_pct: number;
+  }>(`/enforcement-plan?${params}`);
 };
 export const getAnomalies = () => fetchApi<{ anomalies: AnomalyRecord[] }>("/anomalies");
 export const getSummaryByHour = () => fetchApi<{ hour: number; count: number }[]>("/summary/by-hour");
