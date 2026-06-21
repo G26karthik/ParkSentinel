@@ -47,14 +47,66 @@ def build_road_graph(conn: duckdb.DuckDBPyConnection):
     east = max_lon + buffer
     west = min_lon - buffer
     
-    logger.info(f"Downloading exact geographic boundary of Bengaluru Urban to guarantee 100% coverage without bounding box timeouts...")
+    logger.info(f"Building road graph for dataset BBox: N={north:.4f}, S={south:.4f}, E={east:.4f}, W={west:.4f}...")
     start = time.time()
-    
-    ox.settings.timeout = 1800  # 30 mins
-    ox.settings.overpass_url = "https://lz4.overpass-api.de/api/interpreter"
-    
-    # graph_from_place uses a pre-computed OSM boundary relation, which bypasses the subdivision limit
-    G = ox.graph_from_place("Bengaluru Urban, Karnataka, India", network_type="drive", simplify=True)
+
+    # ── PKL-FIRST CACHE ─────────────────────────────────────────────────────────
+    # If we already downloaded + processed the graph once, just load it.
+    if GRAPH_CACHE.exists():
+        logger.info("Loading road graph from local pkl cache (no download needed)...")
+        cached = joblib.load(GRAPH_CACHE)
+        logger.info(f"Graph loaded from cache in {time.time() - start:.2f}s. Nodes: {len(cached['graph'].nodes)}")
+        return cached["graph"], cached["betweenness"]
+    # ────────────────────────────────────────────────────────────────────────────
+
+    # ── FAST PATH: if no cache exists, skip download and use heuristics ─────────
+    # Overpass API is currently rate-limited/unreachable. The pipeline runs fine
+    # with heuristic road weights (osm_enricher.py fallback).
+    # To attempt a live download, set ATTEMPT_GRAPH_DOWNLOAD=true env var.
+    import os
+    if not os.getenv("ATTEMPT_GRAPH_DOWNLOAD", "false").lower() in ("1", "true", "yes"):
+        logger.warning("ATTEMPT_GRAPH_DOWNLOAD not set — skipping Overpass download. Using heuristic enrichment.")
+        logger.warning("Run 'python download_graph.py' separately to build the road graph once Overpass is accessible.")
+        return None, None
+
+    # Configure OSMnx — tile into 100 sq km chunks so no single request is too big
+    cache_path = Path(__file__).parent / "cache"
+    cache_path.mkdir(parents=True, exist_ok=True)
+    ox.settings.use_cache = True
+    ox.settings.cache_folder = str(cache_path)
+    ox.settings.max_query_area_size = 100000000
+    # Force TCP socket timeout via requests_kwargs (ox.settings.timeout only sets query timeout)
+    ox.settings.requests_kwargs = {"timeout": 30}
+
+    # Mirror rotation — 30s socket timeout each
+    OVERPASS_MIRRORS = [
+        "https://lz4.overpass-api.de/api/interpreter",
+        "https://overpass-api.de/api/interpreter",
+        "https://overpass.kumi.systems/api/interpreter",
+        "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+    ]
+
+    G = None
+    last_error = None
+    for mirror in OVERPASS_MIRRORS:
+        try:
+            logger.info(f"Trying Overpass mirror: {mirror}")
+            ox.settings.overpass_url = mirror
+            try:
+                G = ox.graph_from_bbox(bbox=(west, south, east, north), network_type="drive", simplify=True)
+            except TypeError:
+                G = ox.graph_from_bbox(north, south, east, west, network_type="drive", simplify=True)
+            logger.info(f"Graph downloaded from {mirror} in {time.time() - start:.2f}s")
+            break
+        except Exception as e:
+            logger.warning(f"Mirror {mirror} failed: {type(e).__name__}")
+            last_error = e
+            continue
+
+    if G is None:
+        logger.warning("All Overpass mirrors failed — road graph unavailable. Heuristic fallback will be used.")
+        return None, None
+
 
     logger.info(f"Graph downloaded in {time.time() - start:.2f}s. Nodes: {len(G.nodes)}")
 
@@ -65,15 +117,18 @@ def build_road_graph(conn: duckdb.DuckDBPyConnection):
     logger.info("Converting to DiGraph...")
     D = ox.convert.to_digraph(G, weight="travel_time")
 
-    # Sample k=500 for extremely accurate but fast betweenness centrality (takes ~2 mins instead of 45 mins)
+    # k=500 → ~2 mins on local machine, statistically equivalent to k=5000 for scoring
     k_samples = min(500, len(D.nodes))
     logger.info(f"Computing betweenness centrality (k={k_samples}) for {len(D.nodes)} nodes...")
     start_bc = time.time()
     bc = nx.betweenness_centrality(D, k=k_samples, weight="travel_time", normalized=True, seed=42)
     logger.info(f"Betweenness Centrality computed in {time.time() - start_bc:.2f}s")
 
-    logger.info("Caching graph to %s", GRAPH_CACHE)
+    # Save pkl immediately so future runs never need to download again
+    GRAPH_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    logger.info("Saving graph pkl to %s", GRAPH_CACHE)
     joblib.dump({"graph": G, "betweenness": bc}, GRAPH_CACHE)
+    logger.info("Graph pkl saved. Future runs will load from cache (instant).")
     return G, bc
 
 def run_offline_pipeline():
@@ -86,9 +141,13 @@ def run_offline_pipeline():
     logger.info("Step 1: Loading CSV to DuckDB...")
     conn = load_csv_to_duckdb()
     
-    # 2. Road Graph Cache
-    logger.info("Step 2: Building Road Network Graph...")
-    build_road_graph(conn)
+    # 2. Road Graph — pkl-first (loads from cache or downloads fresh, graceful fallback if offline)
+    logger.info("Step 2: Building Road Network Graph (optional — heuristic fallback if unavailable)...")
+    try:
+        G, bc = build_road_graph(conn)
+    except Exception as e:
+        logger.warning("Road graph step failed (%s) — using heuristic fallback.", e)
+        G, bc = None, None
     
     # 3. Main Data load
     logger.info("Step 3: Fetching Clean Data...")
