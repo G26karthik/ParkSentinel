@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import logging
+import os
+import urllib.request
 from contextlib import asynccontextmanager
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 import duckdb
@@ -58,6 +61,87 @@ _state: dict[str, Any] = {}
 
 PIPELINE_CACHE = CACHE_DIR / "pipeline_state.pkl"
 
+# ── Artifact bootstrapper (for Render free tier / no persistent disk) ────────
+# Set ARTIFACTS_RELEASE_URL in your Render env vars to the GitHub Release
+# download URL of your artifact zip, e.g.:
+#   https://github.com/G26karthik/ParkSentinel/releases/download/v1.0/artifacts.zip
+
+ARTIFACTS_RELEASE_URL = os.getenv("ARTIFACTS_RELEASE_URL", "")
+
+
+def _download_file(url: str, dest: Path, label: str) -> bool:
+    """Download a single file with progress logging. Returns True on success."""
+    try:
+        logger.info("Downloading %s from %s ...", label, url)
+        tmp = dest.with_suffix(".tmp")
+
+        def _report(block, bsize, total):
+            if block % 50 == 0:
+                mb = block * bsize / 1e6
+                logger.info("  %s: %.1f MB downloaded...", label, mb)
+
+        req = urllib.request.Request(url, headers={"User-Agent": "ParkSentinel/1.0"})
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            total = int(resp.headers.get("Content-Length", 0))
+            logger.info("  %s size: %.1f MB", label, total / 1e6)
+            chunk_size = 1024 * 1024  # 1MB
+            downloaded = 0
+            with open(tmp, "wb") as f:
+                while True:
+                    chunk = resp.read(chunk_size)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+                    downloaded += len(chunk)
+                    if downloaded % (10 * 1024 * 1024) < chunk_size:
+                        logger.info("  %s: %.0f / %.0f MB", label, downloaded / 1e6, total / 1e6)
+        tmp.rename(dest)
+        logger.info("  %s: download complete (%.1f MB)", label, dest.stat().st_size / 1e6)
+        return True
+    except Exception as e:
+        logger.error("Failed to download %s: %s", label, e)
+        if tmp.exists():
+            tmp.unlink(missing_ok=True)
+        return False
+
+
+def download_artifacts():
+    """Download pre-built pipeline artifacts from GitHub Releases if not present.
+    
+    This is the Render free-tier deployment strategy:
+    - No persistent disk → artifacts download fresh on each cold start (~15s)
+    - ARTIFACTS_RELEASE_URL env var points to GitHub Release download base URL
+    - Format: https://github.com/<user>/<repo>/releases/download/<tag>
+    """
+    if not ARTIFACTS_RELEASE_URL:
+        logger.info("ARTIFACTS_RELEASE_URL not set — assuming artifacts are on local disk.")
+        return
+
+    base = ARTIFACTS_RELEASE_URL.rstrip("/")
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+    ARTIFACTS = [
+        ("pipeline_state.pkl",   CACHE_DIR / "pipeline_state.pkl"),
+        ("parksentinel.duckdb",  CACHE_DIR / "parksentinel.duckdb"),
+        ("clusters_cache.pkl",   CACHE_DIR / "clusters_cache.pkl"),
+        ("prophet_forecasts.pkl",CACHE_DIR / "prophet_forecasts.pkl"),
+    ]
+
+    any_downloaded = False
+    for filename, dest in ARTIFACTS:
+        if dest.exists():
+            logger.info("Artifact %s already present — skipping download.", filename)
+            continue
+        url = f"{base}/{filename}"
+        ok = _download_file(url, dest, filename)
+        if ok:
+            any_downloaded = True
+        else:
+            logger.error("CRITICAL: Could not fetch artifact %s — server may fail to start.", filename)
+
+    if any_downloaded:
+        logger.info("All artifacts downloaded from GitHub Releases.")
+
 
 def load_offline_state():
     """Load pre-computed offline pipeline state into memory."""
@@ -79,6 +163,10 @@ def load_offline_state():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Step 0: Download artifacts from GitHub Releases if not on local disk
+    # (Required for Render free tier which has no persistent disk)
+    download_artifacts()
+
     # Connect to read-only duckdb database created by offline pipeline
     from config import DUCKDB_PATH
     if not DUCKDB_PATH.exists():
