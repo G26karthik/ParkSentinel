@@ -6,7 +6,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(os.getenv("PARKSENTINEL_ROOT", Path(__file__).resolve().parent.parent))
 DATA_DIR = Path(os.getenv("DATA_DIR", PROJECT_ROOT / "data"))
 CACHE_DIR = Path(os.getenv("CACHE_DIR", PROJECT_ROOT / "cache"))
-CSV_FILENAME = "jan_to_may_police_violation_anonymized791b166.csv"
+CSV_FILENAME = "jan_to_may_police_violation_anonymized791b166.csv.gz"
 CSV_PATH = DATA_DIR / CSV_FILENAME
 DUCKDB_PATH = CACHE_DIR / "parksentinel.duckdb"
 OSM_CACHE_PATH = CACHE_DIR / "osm_road_cache.pkl"
