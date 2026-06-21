@@ -20,6 +20,8 @@ CORS_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3001",
+    "https://park-sentinel.vercel.app",
+    "*"  # Allow all for hackathon flexibility
 ]
 
 # Geographic bounds for Bengaluru
