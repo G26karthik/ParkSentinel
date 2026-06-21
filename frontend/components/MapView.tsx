@@ -132,7 +132,6 @@ export default function MapView({
       >
         <Map
           mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
-          style={{ width: "100%", height: "100%" }}
         />
       </DeckGL>
       {/* Click hint */}

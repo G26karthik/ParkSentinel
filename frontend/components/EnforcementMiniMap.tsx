@@ -82,7 +82,7 @@ export default function EnforcementMiniMap({ items, showRoute = false }: { items
   return (
     <div className="relative h-64 w-full rounded-xl overflow-hidden border border-gray-800">
       <DeckGL initialViewState={initialViewState} controller={true} layers={layers} style={{ position: "absolute", inset: 0 }}>
-        <Map mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json" style={{ width: "100%", height: "100%" }} />
+        <Map mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json" />
       </DeckGL>
       <div className="absolute bottom-2 left-2 bg-gray-950/80 rounded-md px-2 py-1 text-[10px] text-gray-300 pointer-events-none">
         Numbered by enforcement rank · color = CIS band
