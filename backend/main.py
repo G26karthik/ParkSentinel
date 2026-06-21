@@ -59,84 +59,36 @@ _state: dict[str, Any] = {}
 PIPELINE_CACHE = CACHE_DIR / "pipeline_state.pkl"
 
 
-def _run_pipeline(conn: duckdb.DuckDBPyConnection) -> None:
-    """Run full ML pipeline on startup."""
-    if PIPELINE_CACHE.exists():
-        logger.info("Loading pipeline state from cache...")
-        cached = joblib.load(PIPELINE_CACHE)
-        _state.update(cached)
-        _state["conn"] = conn
-        stats = get_data_stats(conn)
-        _state["stats"] = stats
-        n_clusters = len(_state.get("clusters_df", pd.DataFrame()))
-        logger.info(
-            "System ready (cached). %d clusters. %d critical zones.",
-            n_clusters,
-            _state.get("critical_count", 0),
-        )
-        return
-
-    df = get_clean_violations_df(conn)
-    logger.info("Pipeline: %d approved records loaded", len(df))
-
-    df, clusters_df = run_hdbscan_clustering(df)
-    h3_df = compute_h3_aggregation(df, H3_RESOLUTION)
-    df["h3_cell"] = df.apply(
-        lambda r: h3.latlng_to_cell(r["latitude"], r["longitude"], H3_RESOLUTION),
-        axis=1,
-    )
-    h3_df = add_dominant_violations(h3_df, conn)
-
-    total_days = (df["violation_date"].max() - df["violation_date"].min()).days + 1
-
-    # OSM enrichment (uses cache; may use defaults if offline)
-    cluster_road_weights = {}
-    if not clusters_df.empty:
-        from osm_enricher import enrich_clusters_with_road_weights
-
-        cluster_road_weights = enrich_clusters_with_road_weights(clusters_df)
-
-    h3_road_weights = enrich_h3_with_road_weights(h3_df)
-
-    if not clusters_df.empty:
-        clusters_df = score_clusters(clusters_df, df, cluster_road_weights, total_days)
-
-    h3_df = score_h3_cells(h3_df, df, h3_road_weights, total_days)
-
-    anomalies = detect_anomalies(df)
-    forecasts = fit_prophet_forecasts(h3_df, df)
-
-    stats = get_data_stats(conn)
-    critical_count = int((h3_df["classification"] == "CRITICAL").sum()) if not h3_df.empty else 0
-
-    _state["conn"] = conn
-    _state["df"] = df
-    _state["clusters_df"] = clusters_df
-    _state["h3_df"] = h3_df
-    _state["anomalies"] = anomalies
-    _state["forecasts"] = forecasts
-    _state["stats"] = stats
-    _state["critical_count"] = critical_count
-    _state["total_days"] = total_days
-
-    n_clusters = len(clusters_df) if not clusters_df.empty else 0
+def load_offline_state():
+    """Load pre-computed offline pipeline state into memory."""
+    if not PIPELINE_CACHE.exists():
+        logger.error("CRITICAL: pipeline_state.pkl not found in %s", CACHE_DIR)
+        logger.error("You MUST run 'python offline_pipeline.py' before starting the server.")
+        raise RuntimeError("Missing offline pipeline cache.")
+        
+    logger.info("Loading offline pipeline state from cache...")
+    cached = joblib.load(PIPELINE_CACHE)
+    _state.update(cached)
+    
+    n_clusters = len(_state.get("clusters_df", pd.DataFrame()))
     logger.info(
-        "System ready. %d clusters found. %d critical zones.",
+        "System ready (read-only mode). %d clusters. %d critical zones.",
         n_clusters,
-        critical_count,
+        _state.get("critical_count", 0),
     )
-
-    # Cache pipeline state (exclude conn)
-    cache_state = {k: v for k, v in _state.items() if k != "conn"}
-    PIPELINE_CACHE.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(cache_state, PIPELINE_CACHE)
-    logger.info("Pipeline state cached to %s", PIPELINE_CACHE)
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    conn = load_csv_to_duckdb()
-    _run_pipeline(conn)
+    # Connect to read-only duckdb database created by offline pipeline
+    from config import DUCKDB_PATH
+    if not DUCKDB_PATH.exists():
+        logger.error("CRITICAL: DuckDB database not found at %s", DUCKDB_PATH)
+        raise RuntimeError("Missing DuckDB database.")
+        
+    conn = duckdb.connect(str(DUCKDB_PATH), read_only=True)
+    _state["conn"] = conn
+    
+    load_offline_state()
     yield
     conn.close()
 

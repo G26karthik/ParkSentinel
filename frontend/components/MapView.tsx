@@ -10,6 +10,7 @@ function cleanJunctionName(name: string): string {
   return (name || "").replace(/^[A-Z]+\d+\s*-\s*/i, "").replace(/\s*Junction$/i, "").trim() || name;
 }
 import Map from "react-map-gl/maplibre";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { H3Feature, cisColor } from "@/lib/api";
 
 const INITIAL_VIEW = {

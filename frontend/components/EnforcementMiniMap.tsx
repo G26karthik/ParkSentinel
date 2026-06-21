@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import DeckGL from "@deck.gl/react";
 import { ScatterplotLayer, TextLayer, PathLayer } from "@deck.gl/layers";
 import Map from "react-map-gl/maplibre";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { EnforcementItem, cisColor } from "@/lib/api";
 
 const BENGALURU = { longitude: 77.5946, latitude: 12.9716, zoom: 10, pitch: 0, bearing: 0 };
