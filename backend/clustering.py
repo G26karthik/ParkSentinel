@@ -139,7 +139,44 @@ def run_hdbscan_clustering(
 
     logger.info("Running HDBSCAN on %d records...", len(df))
 
-    coords_rad = np.radians(df[["latitude", "longitude"]].values)
+    from osm_enricher import _load_graph_cache
+    graph_data = _load_graph_cache()
+    
+    snapped = False
+    if graph_data is not None:
+        try:
+            import osmnx as ox
+            logger.info("Snapping %d records to nearest road edges...", len(df))
+            G = graph_data["graph"]
+            
+            lons = df["longitude"].values
+            lats = df["latitude"].values
+            
+            # nearest_edges returns (u, v, key) for each coordinate pair
+            edges = ox.distance.nearest_edges(G, X=lons, Y=lats)
+            
+            snapped_lats = np.empty(len(df))
+            snapped_lons = np.empty(len(df))
+            
+            for i, (u, v, _) in enumerate(edges):
+                snapped_lats[i] = (G.nodes[u]['y'] + G.nodes[v]['y']) / 2.0
+                snapped_lons[i] = (G.nodes[u]['x'] + G.nodes[v]['x']) / 2.0
+                
+            coords_rad = np.radians(np.column_stack((snapped_lats, snapped_lons)))
+            
+            # Save snapped coordinates for visualization/debugging if needed
+            df = df.copy()
+            df["snapped_lat"] = snapped_lats
+            df["snapped_lon"] = snapped_lons
+            
+            snapped = True
+            logger.info("Snapping complete.")
+        except Exception as e:
+            logger.warning("Failed to snap to edges: %s", e)
+            
+    if not snapped:
+        coords_rad = np.radians(df[["latitude", "longitude"]].values)
+
     labels = _run_hdbscan_labels(coords_rad)
     df = df.copy()
     df["cluster_id"] = labels
