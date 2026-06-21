@@ -63,7 +63,7 @@ export default function QueryPage() {
   }
 
   return (
-    <div className="flex flex-col h-full max-w-4xl mx-auto p-6 space-y-6">
+    <div className="flex flex-col h-full w-full p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
           <span>💬</span> Ask AI Command Center

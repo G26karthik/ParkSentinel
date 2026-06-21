@@ -61,7 +61,7 @@ function ForecastContent() {
 
   if (loading) {
     return (
-      <div className="p-8 space-y-6 max-w-2xl h-full overflow-y-auto">
+      <div className="p-8 space-y-6 w-full h-full overflow-y-auto">
         <div>
           <h1 className="text-2xl font-bold text-white">Violation Forecast</h1>
           <p className="text-gray-400 text-sm mt-1">14-day Prophet forecast for top critical zones</p>
@@ -87,7 +87,7 @@ function ForecastContent() {
 
   if (error) {
     return (
-      <div className="p-8 space-y-4 max-w-2xl h-full overflow-y-auto">
+      <div className="p-8 space-y-4 w-full h-full overflow-y-auto">
         <h1 className="text-2xl font-bold text-white">Violation Forecast</h1>
         <div className="bg-red-900/20 border border-red-800/50 rounded-xl p-6 space-y-3">
           <p className="text-red-300 text-sm font-medium">⚠ Backend Unreachable</p>
@@ -104,7 +104,7 @@ function ForecastContent() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl h-full overflow-y-auto">
+    <div className="p-6 space-y-6 w-full h-full overflow-y-auto">
       <div>
         <h1 className="text-2xl font-bold text-white">Violation Forecast</h1>
         <p className="text-gray-400 text-sm mt-1">
