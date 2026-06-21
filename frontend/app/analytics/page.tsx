@@ -13,7 +13,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   Scatter,
   ComposedChart,
@@ -85,13 +84,13 @@ export default function AnalyticsPage() {
     <div className="p-6 space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-white">Analytics</h1>
-        <p className="text-gray-400 text-sm mt-1">Bengaluru parking violation patterns Nov 2023 – Mar 2024</p>
+        <p className="text-gray-400 text-sm mt-1">Bengaluru parking violation patterns Nov 2023 – Apr 2024</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ChartCard title="Violations by Hour of Day">
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={hourly} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
+            <BarChart data={hourly} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="hour" tick={{ fill: "#9ca3af", fontSize: 11 }} />
               <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} />
@@ -103,7 +102,7 @@ export default function AnalyticsPage() {
 
         <ChartCard title="Violations by Day of Week">
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={dow} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
+            <BarChart data={dow} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="day_name" tick={{ fill: "#9ca3af", fontSize: 11 }} />
               <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} />
@@ -115,7 +114,7 @@ export default function AnalyticsPage() {
 
         <ChartCard title="Monthly Violation Trend">
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={monthly} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>
+            <LineChart data={monthly} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="month_year" tick={{ fill: "#9ca3af", fontSize: 11 }} interval={0} />
               <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} />
@@ -137,7 +136,7 @@ export default function AnalyticsPage() {
                 nameKey="vehicle_type"
                 cx="50%"
                 cy="50%"
-                outerRadius={80}
+                outerRadius={90}
                 label={({ name, percent }: { name: string; percent: number }) =>
                   percent >= 0.03 ? `${name} ${(percent * 100).toFixed(0)}%` : ""
                 }
@@ -153,15 +152,15 @@ export default function AnalyticsPage() {
         </ChartCard>
 
         <ChartCard title="Top 15 Police Stations">
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={stations} layout="vertical" margin={{ top: 10, right: 20, left: 80, bottom: 10 }}>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={stations} layout="vertical" margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis type="number" tick={{ fill: "#9ca3af", fontSize: 11 }} />
               <YAxis
                 type="category"
                 dataKey="police_station"
                 tick={{ fill: "#9ca3af", fontSize: 10 }}
-                width={75}
+                width={90}
               />
               <Tooltip contentStyle={{ background: "#1f2937", border: "none" }} />
               <Bar dataKey="violation_count" fill="#8b5cf6" radius={[0, 2, 2, 0]} />
@@ -170,15 +169,15 @@ export default function AnalyticsPage() {
         </ChartCard>
 
         <ChartCard title="Violation Type Distribution">
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={violations} layout="vertical" margin={{ top: 10, right: 20, left: 120, bottom: 10 }}>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={violations} layout="vertical" margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis type="number" tick={{ fill: "#9ca3af", fontSize: 11 }} />
               <YAxis
                 type="category"
                 dataKey="violation_type"
                 tick={{ fill: "#9ca3af", fontSize: 9 }}
-                width={115}
+                width={130}
               />
               <Tooltip contentStyle={{ background: "#1f2937", border: "none" }} />
               <Bar dataKey="count" fill="#22c55e" radius={[0, 2, 2, 0]} />
@@ -188,8 +187,8 @@ export default function AnalyticsPage() {
       </div>
 
       <ChartCard title="Daily Violations with Anomaly Detection">
-        <ResponsiveContainer width="100%" height={350}>
-          <ComposedChart data={dailyWithAnomaly} margin={{ top: 15, right: 20, left: 10, bottom: 25 }}>
+        <ResponsiveContainer width="100%" height={320}>
+          <ComposedChart data={dailyWithAnomaly} margin={{ top: 10, right: 20, left: 5, bottom: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis
               dataKey="violation_date"

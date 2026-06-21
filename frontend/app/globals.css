@@ -13,77 +13,38 @@ body {
 }
 
 @media print {
-  /* Hide sidebar, headers, controls, and buttons */
-  aside,
-  button,
-  select,
-  input,
-  .no-print,
-  .md\:hidden {
-    display: none !important;
-  }
+  /* Hide non-printable chrome */
+  aside { display: none !important; }
+  button { display: none !important; }
+  select { display: none !important; }
+  input[type="date"] { display: none !important; }
+  input[type="text"] { display: none !important; }
+  input[type="checkbox"] { display: none !important; }
+  label { display: none !important; }
 
-  /* Unbind height constraints to print multiple pages */
-  html, body, #__next, .flex, main, div[class*="h-screen"], div[class*="overflow-hidden"], main[class*="overflow-auto"] {
-    height: auto !important;
-    min-height: 0 !important;
-    overflow: visible !important;
-    position: static !important;
-    display: block !important;
-  }
-
-  main {
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
-  }
-
-  /* Keep colors intact in print */
+  /* Preserve dark theme colors in print */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    color-scheme: dark !important;
   }
 
-  /* Make map size consistent on print */
-  .relative.h-64 {
-    height: 380px !important;
-    page-break-inside: avoid !important;
-    margin-bottom: 20px !important;
+  /* Allow full page layout to flow */
+  body, html {
+    background: #030712 !important;
+    color: #f3f4f6 !important;
   }
 
-  /* Ensure summary cards / banner display correctly */
-  .bg-red-900\/20 {
-    border: 1px solid #7f1d1d !important;
-    background-color: rgba(127, 29, 29, 0.1) !important;
-    color: #fca5a5 !important;
-    padding: 12px !important;
-    border-radius: 8px !important;
-    margin-bottom: 20px !important;
-    page-break-inside: avoid !important;
+  /* Unset screen-only height constraints */
+  body > div, main {
+    height: auto !important;
+    overflow: visible !important;
   }
 
-  /* Table styling for print */
-  table {
-    page-break-inside: auto !important;
-    width: 100% !important;
-    border-collapse: collapse !important;
-    background-color: #111827 !important;
-    border: 1px solid #1f2937 !important;
-  }
+  /* Give table rows page-break protection */
+  tr { page-break-inside: avoid !important; }
+  thead { display: table-header-group !important; }
 
-  tr {
-    page-break-inside: avoid !important;
-    page-break-after: auto !important;
-  }
-
-  thead {
-    display: table-header-group !important;
-    background-color: #1f2937 !important;
-  }
-
-  th, td {
-    border: 1px solid #1f2937 !important;
-    padding: 8px !important;
-  }
+  /* Map container: fixed height so it prints */
+  .h-64 { height: 300px !important; }
 }
+

@@ -120,16 +120,25 @@ export default function MapView({
   }, [h3Data, heatmapPoints, junctions, layerMode, onSelect]);
 
   return (
-    <DeckGL
-      initialViewState={INITIAL_VIEW}
-      controller={true}
-      layers={layers}
-      style={{ width: "100%", height: "100%" }}
-    >
-      <Map
-        mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+    <div style={{ width: "100%", height: "100%", position: "relative" }}>
+      <DeckGL
+        initialViewState={INITIAL_VIEW}
+        controller={true}
+        layers={layers}
         style={{ width: "100%", height: "100%" }}
-      />
-    </DeckGL>
+        getCursor={({ isHovering }: { isHovering: boolean }) =>
+          isHovering ? "pointer" : "grab"
+        }
+      >
+        <Map
+          mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+          style={{ width: "100%", height: "100%" }}
+        />
+      </DeckGL>
+      {/* Click hint */}
+      <div className="absolute bottom-3 right-3 bg-gray-950/80 border border-gray-800 rounded-lg px-3 py-1.5 text-[10px] text-gray-400 pointer-events-none select-none backdrop-blur-sm">
+        🖱️ Click a zone for details · Scroll to zoom
+      </div>
+    </div>
   );
 }
