@@ -58,7 +58,7 @@ export default function DashboardPage() {
   }, [loadData]);
 
   return (
-    <div className="relative h-full">
+    <div className="relative h-full overflow-hidden">
       {/* Header overlay */}
       <div className="absolute top-0 left-0 right-0 z-20 p-4 space-y-3 pointer-events-none">
         <div className="flex flex-col md:flex-row items-start gap-3 pointer-events-auto w-full max-w-full">

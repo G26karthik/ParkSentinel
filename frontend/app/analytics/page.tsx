@@ -81,7 +81,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-6 space-y-8 h-full overflow-y-auto">
       <div>
         <h1 className="text-2xl font-bold text-white">Analytics</h1>
         <p className="text-gray-400 text-sm mt-1">Bengaluru parking violation patterns Nov 2023 – Apr 2024</p>
