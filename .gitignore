@@ -1,6 +1,5 @@
 cache/
 data/*.csv
-screenshots/
 backend/__pycache__/
 frontend/node_modules/
 frontend/.next/
