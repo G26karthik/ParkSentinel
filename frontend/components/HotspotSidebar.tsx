@@ -43,8 +43,8 @@ export default function HotspotSidebar({ feature, onClose }: HotspotSidebarProps
 
   const peakLabel = SHIFT_LABEL[p.peak_hour || 10] || `Around ${p.peak_hour}:00`;
   const officers = officersFor(p.classification);
-  // police_station lives on H3Feature properties when enriched
-  const station = (p as unknown as Record<string, string>).police_station || "";
+  const station = p.police_station || "";
+  const zoneName = p.zone_name || station || (p.is_junction_cell ? "Junction Zone" : "Parking Zone");
 
   return (
     <div className="absolute right-4 top-20 bottom-4 w-80 bg-gray-900/97 backdrop-blur border border-gray-700 rounded-xl overflow-y-auto shadow-2xl z-10">
@@ -55,10 +55,10 @@ export default function HotspotSidebar({ feature, onClose }: HotspotSidebarProps
             {p.is_junction_cell ? "Junction Zone" : "Parking Zone"}
           </p>
           <h2 className="text-base font-semibold text-white leading-tight mt-0.5">
-            {p.is_junction_cell ? "High-Traffic Junction" : "Illegal Parking Hotspot"}
+            {zoneName}
           </h2>
           {station && (
-            <p className="text-xs text-gray-400 mt-0.5">{station} Police Station area</p>
+            <p className="text-xs text-gray-400 mt-0.5">{station} Police Station</p>
           )}
         </div>
         <button onClick={onClose} className="text-gray-500 hover:text-white text-xl leading-none mt-0.5">

@@ -128,7 +128,7 @@ export default function MapView({
         layers={layers}
         style={{ width: "100%", height: "100%" }}
         getCursor={({ isHovering }: { isHovering: boolean }) =>
-          isHovering ? "pointer" : "grab"
+          layerMode === "heatmap" ? "crosshair" : isHovering ? "pointer" : "grab"
         }
       >
         <Map

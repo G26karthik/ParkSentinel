@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Any
 
 import h3
@@ -206,7 +205,7 @@ def run_hdbscan_clustering(
         junction_name, has_junction = _nearest_junction(centroid_lat, centroid_lon, junction_df)
 
         vehicle_mix = grp["vehicle_type"].value_counts().to_dict()
-        violation_mix = (
+        (
             grp.merge(
                 grp[["id"]].drop_duplicates(),
                 on="id",

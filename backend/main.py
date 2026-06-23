@@ -6,7 +6,6 @@ import logging
 import os
 import urllib.request
 from contextlib import asynccontextmanager
-from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -19,17 +18,12 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 
-from anomaly_detector import detect_anomalies
 from clustering import (
-    add_dominant_violations,
-    compute_h3_aggregation,
     h3_cell_to_geojson,
-    run_hdbscan_clustering,
 )
-from config import CACHE_DIR, CORS_ORIGINS, H3_RESOLUTION, HEATMAP_MAX_POINTS, PRODUCT_NAME
-from data_loader import get_clean_violations_df, get_data_stats, load_csv_to_duckdb
+from config import CACHE_DIR, CORS_ORIGINS, HEATMAP_MAX_POINTS, PRODUCT_NAME
 from enforcement import generate_enforcement_plan
-from forecaster import fit_prophet_forecasts, get_forecast, get_top_forecasts
+from forecaster import get_forecast, get_top_forecasts
 from models import (
     AnomaliesResponse,
     EnforcementPlanResponse,
@@ -43,10 +37,8 @@ from models import (
     SummaryStats,
     TopForecastResponse,
 )
-from osm_enricher import enrich_h3_with_road_weights
 from pdf_generator import generate_patrol_pdf
 from query_engine import run_nl_query
-from scoring import score_clusters, score_h3_cells
 
 load_dotenv()
 
@@ -366,6 +358,8 @@ async def get_h3_grid(
                     "unique_vehicles": int(row.get("unique_vehicles", 0)),
                     "centroid_lat": row["centroid_lat"],
                     "centroid_lon": row["centroid_lon"],
+                    "police_station": row.get("police_station"),
+                    "zone_name": _resolve_zone_name(row["h3_cell"], filtered),
                 },
             }
         )

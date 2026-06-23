@@ -1,7 +1,5 @@
 import osmnx as ox
-import networkx as nx
 import time
-import joblib
 
 LAT_MIN, LAT_MAX = 12.7, 13.4
 LON_MIN, LON_MAX = 77.3, 77.9

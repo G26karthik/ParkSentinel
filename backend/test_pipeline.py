@@ -4,7 +4,7 @@ import h3
 
 from anomaly_detector import detect_anomalies
 from clustering import add_dominant_violations, compute_h3_aggregation, run_hdbscan_clustering
-from data_loader import get_clean_violations_df, get_data_stats, load_csv_to_duckdb
+from data_loader import get_clean_violations_df, load_csv_to_duckdb
 from osm_enricher import enrich_clusters_with_road_weights, enrich_h3_with_road_weights
 from scoring import score_clusters, score_h3_cells
 

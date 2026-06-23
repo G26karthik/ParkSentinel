@@ -33,6 +33,10 @@ export interface H3Feature {
     unique_vehicles?: number;
     centroid_lat?: number;
     centroid_lon?: number;
+    location?: string;
+    police_station?: string;
+    junction_name?: string;
+    zone_name?: string;
   };
 }
 

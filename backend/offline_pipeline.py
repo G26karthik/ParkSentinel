@@ -4,7 +4,6 @@ import duckdb
 import osmnx as ox
 import networkx as nx
 import joblib
-import pandas as pd
 import h3
 from pathlib import Path
 
@@ -64,7 +63,7 @@ def build_road_graph(conn: duckdb.DuckDBPyConnection):
     # with heuristic road weights (osm_enricher.py fallback).
     # To attempt a live download, set ATTEMPT_GRAPH_DOWNLOAD=true env var.
     import os
-    if not os.getenv("ATTEMPT_GRAPH_DOWNLOAD", "false").lower() in ("1", "true", "yes"):
+    if os.getenv("ATTEMPT_GRAPH_DOWNLOAD", "false").lower() not in ("1", "true", "yes"):
         logger.warning("ATTEMPT_GRAPH_DOWNLOAD not set — skipping Overpass download. Using heuristic enrichment.")
         logger.warning("Run 'python download_graph.py' separately to build the road graph once Overpass is accessible.")
         return None, None
@@ -87,7 +86,6 @@ def build_road_graph(conn: duckdb.DuckDBPyConnection):
     ]
 
     G = None
-    last_error = None
     for mirror in OVERPASS_MIRRORS:
         try:
             logger.info(f"Trying Overpass mirror: {mirror}")
@@ -100,7 +98,6 @@ def build_road_graph(conn: duckdb.DuckDBPyConnection):
             break
         except Exception as e:
             logger.warning(f"Mirror {mirror} failed: {type(e).__name__}")
-            last_error = e
             continue
 
     if G is None:
@@ -147,7 +144,7 @@ def run_offline_pipeline():
         G, bc = build_road_graph(conn)
     except Exception as e:
         logger.warning("Road graph step failed (%s) — using heuristic fallback.", e)
-        G, bc = None, None
+        _G, _bc = None, None
     
     # 3. Main Data load
     logger.info("Step 3: Fetching Clean Data...")

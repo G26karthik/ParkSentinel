@@ -1,6 +1,5 @@
 import duckdb
 from pathlib import Path
-import pandas as pd
 
 CSV_PATH = Path("data/jan_to_may_police_violation_anonymized791b166.csv.gz")
 

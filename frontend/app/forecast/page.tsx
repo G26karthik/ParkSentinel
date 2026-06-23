@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import ForecastChart from "@/components/ForecastChart";
-import { getTopForecasts, getForecast } from "@/lib/api";
+import { getTopForecasts, getForecast, getSummaryByStation } from "@/lib/api";
 
 const TIMEOUT_MS = 15000;
 
@@ -15,6 +15,7 @@ function ForecastContent() {
   >([]);
   const [selected, setSelected] = useState<string>("");
   const [stationFilter, setStationFilter] = useState<string>("");
+  const [allStations, setAllStations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [timedOut, setTimedOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,16 +63,19 @@ function ForecastContent() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    getSummaryByStation()
+      .then((rows) => setAllStations(rows.map((r) => r.police_station).filter(Boolean).sort()))
+      .catch(() => {});
+  }, []);
+
   const current = forecasts.find((f) => f.h3_cell === selected);
 
-  // Derive station list from zone names: "Upparpet (b55)" → "Upparpet"
-  const stations = Array.from(
-    new Set(
-      forecasts
-        .map((f) => f.zone_name?.replace(/\s*\([^)]+\)$/, "").trim() || "")
-        .filter(Boolean)
-    )
+  // Use full station list from API; fall back to deriving from zone names if not loaded yet
+  const derivedStations = Array.from(
+    new Set(forecasts.map((f) => f.zone_name?.replace(/\s*\([^)]+\)$/, "").trim() || "").filter(Boolean))
   ).sort();
+  const stations = allStations.length > 0 ? allStations : derivedStations;
 
   const visibleForecasts = stationFilter
     ? forecasts.filter((f) =>

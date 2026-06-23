@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -60,7 +59,7 @@ def detect_anomalies(df: pd.DataFrame) -> list[dict[str, Any]]:
             date_str = str(row["violation_date"])[:10]
 
             # Per-zone spikes
-            day_df = df[df["violation_date"] == row["violation_date"]]
+            df[df["violation_date"] == row["violation_date"]]
             affected_zones: list[str] = []
 
             for station in df["police_station"].dropna().unique():

@@ -9,7 +9,7 @@ from typing import Any
 import joblib
 import pandas as pd
 
-from config import CACHE_DIR, DEFAULT_HIGHWAY_WEIGHT, HIGHWAY_WEIGHTS, OSM_CACHE_PATH
+from config import CACHE_DIR, DEFAULT_HIGHWAY_WEIGHT, HIGHWAY_WEIGHTS
 
 logger = logging.getLogger(__name__)
 
