@@ -11,7 +11,7 @@
   "dependencies": {
     "@deck.gl/aggregation-layers": "^8.9.36",
     "@deck.gl/core": "^8.9.36",
-    "@deck.gl/layers": "^8.9.36",
+    "@deck.gl/layers": "^9.3.4",
     "@deck.gl/react": "^8.9.36",
     "@turf/turf": "^6.5.0",
     "h3-js": "^4.1.0",
