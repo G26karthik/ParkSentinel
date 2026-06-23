@@ -93,6 +93,8 @@ export const getEnforcementPlan = (date?: string, policeStation?: string) => {
     estimated_travel_km: number;
     naive_travel_km: number;
     time_saved_pct: number;
+    distance_source?: string;
+    naive_route_coords?: [number, number][];
   }>(`/enforcement-plan?${params}`);
 };
 export const getAnomalies = () => fetchApi<{ anomalies: AnomalyRecord[] }>("/anomalies");

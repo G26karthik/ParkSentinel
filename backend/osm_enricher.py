@@ -150,8 +150,27 @@ def enrich_h3_with_road_weights(
             graph_data = None
             
     if graph_data is None:
+        # Try Mappls road class for top-N cells (capped at 30 to conserve API budget)
+        mappls_weight_fn = None
+        try:
+            from mappls_client import road_class_weight as _mw
+            mappls_weight_fn = _mw
+        except ImportError:
+            pass
+
+        top_cells: set[str] = set()
+        if mappls_weight_fn and not h3_df.empty:
+            top_cells = set(
+                h3_df.nlargest(min(30, len(h3_df)), "violation_count")["h3_cell"].tolist()
+            )
+
         for _, row in h3_df.iterrows():
-            weights[row["h3_cell"]] = _heuristic_road_weight(row)
-            
+            cell = row["h3_cell"]
+            if cell in top_cells and mappls_weight_fn:
+                w = mappls_weight_fn(float(row["centroid_lat"]), float(row["centroid_lon"]))
+                weights[cell] = w if w is not None else _heuristic_road_weight(row)
+            else:
+                weights[cell] = _heuristic_road_weight(row)
+
     logger.info("Road weights assigned for %d H3 cells", len(weights))
     return weights

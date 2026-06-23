@@ -251,6 +251,13 @@ def generate_enforcement_plan(
             }
         )
 
+    # Naive route coords (CIS-ranked order, before VRP reorder) for before/after comparison
+    naive_route_coords = [
+        [item["centroid_lon"], item["centroid_lat"]]
+        for item in items
+        if item.get("centroid_lat") and item.get("centroid_lon")
+    ]
+
     # VRP route optimization
     route_result = solve_patrol_route(items)
     reordered = [items[i] for i in route_result["ordered_indices"]]
@@ -271,4 +278,5 @@ def generate_enforcement_plan(
         "naive_travel_km": route_result["naive_distance_km"],
         "time_saved_pct": route_result["time_saved_pct"],
         "distance_source": route_result.get("distance_source", "haversine"),
+        "naive_route_coords": naive_route_coords,
     }
