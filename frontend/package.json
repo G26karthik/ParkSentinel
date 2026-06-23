@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@deck.gl/aggregation-layers": "^8.9.36",
-    "@deck.gl/core": "^8.9.36",
+    "@deck.gl/core": "^9.3.4",
     "@deck.gl/layers": "^8.9.36",
     "@deck.gl/react": "^8.9.36",
     "@turf/turf": "^6.5.0",
