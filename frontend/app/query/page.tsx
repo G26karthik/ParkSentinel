@@ -117,7 +117,7 @@ export default function QueryPage() {
               {msg.role === "user" && (
                 <div className="flex justify-end w-full">
                   <div className="bg-red-950/30 border border-red-800/40 rounded-lg p-3 max-w-xl text-sm font-mono space-y-1.5">
-                    <div className="text-[10px] text-red-400 uppercase tracking-wider font-bold">📟 INCOMING QUERY</div>
+                    <div className="text-[10px] text-red-400 uppercase tracking-wider font-bold">You</div>
                     <p className="text-gray-200">{msg.question}</p>
                   </div>
                 </div>
@@ -127,13 +127,13 @@ export default function QueryPage() {
                   {msg.loading ? (
                     <div className="flex items-center gap-2 text-gray-400 text-xs">
                       <div className="animate-spin w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full" />
-                      PROCESSING COGNITIVE RETRIEVAL...
+                      Thinking...
                     </div>
                   ) : (
                     <>
                       <div className="flex items-center justify-between border-b border-gray-800/40 pb-1.5">
                         <div className="text-[10px] text-green-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                          <span>🛡️ BTP RESPONSE ENGINE</span>
+                          <span>AI Answer</span>
                         </div>
                         {msg.data && (
                           <span className="text-[9px] text-gray-500 uppercase">{msg.data.length} records retrieved</span>

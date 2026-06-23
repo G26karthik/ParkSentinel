@@ -394,7 +394,7 @@ def _resolve_zone_name(h3_cell: str, h3_df: pd.DataFrame) -> str:
 async def get_top_cell_forecasts():
     forecasts = _state.get("forecasts", {})
     h3_df = _state.get("h3_df", pd.DataFrame())
-    top = get_top_forecasts(forecasts, h3_df, top_n=10)
+    top = get_top_forecasts(forecasts, h3_df, top_n=20)
     return TopForecastResponse(
         forecasts=[
             ForecastResponse(

@@ -175,7 +175,7 @@ export default function EnforcementMiniMap({ items, showRoute = false, naiveRout
                 : "bg-gray-800/90 text-gray-400 hover:text-white"
             }`}
           >
-            VRP Optimized
+            Smart Route (AI)
           </button>
           <button
             onClick={() => setRouteMode("naive")}
@@ -185,7 +185,7 @@ export default function EnforcementMiniMap({ items, showRoute = false, naiveRout
                 : "bg-gray-800/90 text-gray-400 hover:text-white"
             }`}
           >
-            Naive Order
+            Standard Order
           </button>
         </div>
       )}

@@ -137,7 +137,9 @@ export default function MapView({
       </DeckGL>
       {/* Click hint */}
       <div className="absolute bottom-3 right-3 bg-gray-950/80 border border-gray-800 rounded-lg px-3 py-1.5 text-[10px] text-gray-400 pointer-events-none select-none backdrop-blur-sm">
-        🖱️ Click a zone for details · Scroll to zoom
+        {layerMode === "heatmap"
+          ? "🔥 Heatmap mode — switch to Hex or Both to select a zone"
+          : "🖱️ Click a coloured zone for details · Scroll to zoom"}
       </div>
     </div>
   );

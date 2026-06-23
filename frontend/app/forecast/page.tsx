@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import ForecastChart from "@/components/ForecastChart";
 import { getTopForecasts, getForecast } from "@/lib/api";
 
-const TIMEOUT_MS = 15000; // 15 s — show "still computing" message after this
+const TIMEOUT_MS = 15000;
 
 function ForecastContent() {
   const searchParams = useSearchParams();
@@ -14,6 +14,7 @@ function ForecastContent() {
     { h3_cell: string; forecast: unknown[]; historical: unknown[]; zone_name?: string }[]
   >([]);
   const [selected, setSelected] = useState<string>("");
+  const [stationFilter, setStationFilter] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [timedOut, setTimedOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,17 +25,30 @@ function ForecastContent() {
     setTimedOut(false);
     setError(null);
 
-    // Show "still computing" hint after TIMEOUT_MS
     const timer = setTimeout(() => setTimedOut(true), TIMEOUT_MS);
 
     try {
       const data = await getTopForecasts();
       clearTimeout(timer);
-      setForecasts(data.forecasts);
-      if (cellParam && data.forecasts.some((f) => f.h3_cell === cellParam)) {
+
+      let all = data.forecasts;
+
+      // If the linked cell isn't in top-20, fetch it individually and prepend
+      if (cellParam && !all.some((f) => f.h3_cell === cellParam)) {
+        try {
+          const single = await getForecast(cellParam);
+          if (single.forecast?.length) all = [single, ...all];
+        } catch {
+          // cell not forecastable — fall through to top-20
+        }
+      }
+
+      setForecasts(all);
+
+      if (cellParam && all.some((f) => f.h3_cell === cellParam)) {
         setSelected(cellParam);
-      } else if (data.forecasts.length > 0) {
-        setSelected(data.forecasts[0].h3_cell);
+      } else if (all.length > 0) {
+        setSelected(all[0].h3_cell);
       }
     } catch (e) {
       clearTimeout(timer);
@@ -46,11 +60,24 @@ function ForecastContent() {
     }
   }, [cellParam, attempt]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
   const current = forecasts.find((f) => f.h3_cell === selected);
+
+  // Derive station list from zone names: "Upparpet (b55)" → "Upparpet"
+  const stations = Array.from(
+    new Set(
+      forecasts
+        .map((f) => f.zone_name?.replace(/\s*\([^)]+\)$/, "").trim() || "")
+        .filter(Boolean)
+    )
+  ).sort();
+
+  const visibleForecasts = stationFilter
+    ? forecasts.filter((f) =>
+        (f.zone_name || "").toLowerCase().startsWith(stationFilter.toLowerCase())
+      )
+    : forecasts;
 
   const topRiskDays = current
     ? (current.forecast as { ds: string; yhat: number }[])
@@ -64,7 +91,7 @@ function ForecastContent() {
       <div className="p-8 space-y-6 w-full h-full overflow-y-auto">
         <div>
           <h1 className="text-2xl font-bold text-white">Violation Forecast</h1>
-          <p className="text-gray-400 text-sm mt-1">14-day Prophet forecast for top critical zones</p>
+          <p className="text-gray-400 text-sm mt-1">14-day prediction for top critical zones</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 space-y-4">
           <div className="flex items-center gap-3 text-gray-300">
@@ -73,11 +100,11 @@ function ForecastContent() {
           </div>
           {timedOut && (
             <div className="bg-yellow-900/20 border border-yellow-700/40 rounded-lg p-4 space-y-2">
-              <p className="text-yellow-300 text-sm font-medium">⏳ This is taking longer than usual</p>
+              <p className="text-yellow-300 text-sm font-medium">⏳ Taking longer than usual</p>
               <p className="text-yellow-200/70 text-xs leading-relaxed">
-                On first startup, the backend trains Prophet time-series models for the top 20 critical zones — this can take <strong>60–90 seconds</strong>. Results are cached after the first run.
+                On first startup the system trains prediction models for {forecasts.length || 20} critical zones —
+                this takes <strong>60–90 seconds</strong> and is then cached. Please wait.
               </p>
-              <p className="text-yellow-200/70 text-xs">Please wait, or check that the backend is running on port 8000.</p>
             </div>
           )}
         </div>
@@ -92,10 +119,7 @@ function ForecastContent() {
         <div className="bg-red-900/20 border border-red-800/50 rounded-xl p-6 space-y-3">
           <p className="text-red-300 text-sm font-medium">⚠ Backend Unreachable</p>
           <p className="text-gray-400 text-sm">{error}</p>
-          <button
-            onClick={() => setAttempt((a) => a + 1)}
-            className="bg-red-700 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg transition-colors"
-          >
+          <button onClick={() => setAttempt((a) => a + 1)} className="bg-red-700 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg transition-colors">
             Retry
           </button>
         </div>
@@ -108,7 +132,7 @@ function ForecastContent() {
       <div>
         <h1 className="text-2xl font-bold text-white">Violation Forecast</h1>
         <p className="text-gray-400 text-sm mt-1">
-          14-day Prophet forecast for top critical zones
+          14-day AI prediction · top {forecasts.length} critical zones
         </p>
       </div>
 
@@ -116,38 +140,59 @@ function ForecastContent() {
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center space-y-3">
           <p className="text-gray-300 font-medium">Forecasts not yet available</p>
           <p className="text-gray-500 text-sm">
-            The backend computes Prophet models on first startup. This takes ~60–90 seconds and is then cached.
-            If you just restarted the backend, wait a moment and retry.
+            The system computes prediction models on first startup (~60–90 seconds). Wait a moment and retry.
           </p>
-          <button
-            onClick={() => setAttempt((a) => a + 1)}
-            className="bg-gray-800 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-lg transition-colors"
-          >
+          <button onClick={() => setAttempt((a) => a + 1)} className="bg-gray-800 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-lg transition-colors">
             Retry
           </button>
         </div>
       ) : (
         <>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <select
-              value={selected}
-              onChange={(e) => setSelected(e.target.value)}
-              className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm w-full md:w-auto font-medium"
-            >
-              {forecasts.map((f) => (
-                <option key={f.h3_cell} value={f.h3_cell}>
-                  {f.zone_name ? `${f.zone_name}` : f.h3_cell}
-                </option>
-              ))}
-            </select>
-            {selected && (
-              <span className="text-xs text-gray-500 font-mono">{selected}</span>
-            )}
+          {/* Two-level selector: station → zone */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] text-gray-500 uppercase tracking-wide font-medium">Police Station</label>
+              <select
+                value={stationFilter}
+                onChange={(e) => {
+                  setStationFilter(e.target.value);
+                  const first = forecasts.find((f) =>
+                    e.target.value
+                      ? (f.zone_name || "").toLowerCase().startsWith(e.target.value.toLowerCase())
+                      : true
+                  );
+                  if (first) setSelected(first.h3_cell);
+                }}
+                className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm w-full sm:w-52"
+              >
+                <option value="">All stations</option>
+                {stations.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1 flex-1">
+              <label className="text-[10px] text-gray-500 uppercase tracking-wide font-medium">
+                Zone ({visibleForecasts.length} available)
+              </label>
+              <select
+                value={selected}
+                onChange={(e) => setSelected(e.target.value)}
+                className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm w-full"
+              >
+                {visibleForecasts.map((f) => (
+                  <option key={f.h3_cell} value={f.h3_cell}>
+                    {f.zone_name || f.h3_cell}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {current && (
             <ForecastChart
-              title={current.zone_name ? `${current.zone_name}` : `Zone ${selected}`}
+              title={current.zone_name || `Zone ${selected}`}
               historical={current.historical as { ds: string; y: number }[]}
               forecast={current.forecast as { ds: string; yhat: number; yhat_lower: number; yhat_upper: number }[]}
             />
@@ -160,7 +205,7 @@ function ForecastContent() {
                 <thead>
                   <tr className="text-gray-400 text-left">
                     <th className="pb-2">Date</th>
-                    <th className="pb-2">Predicted Violations</th>
+                    <th className="pb-2">Expected Violations</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -179,7 +224,7 @@ function ForecastContent() {
                 </tbody>
               </table>
               <p className="text-gray-400 text-xs mt-4">
-                {current?.zone_name ?? selected} expected to peak on high-risk days — recommend pre-emptive deployment.
+                <strong>{current?.zone_name ?? selected}</strong> is predicted to peak on these days — consider pre-emptive deployment.
               </p>
             </div>
           )}
