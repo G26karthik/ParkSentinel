@@ -26,8 +26,11 @@ import mappls_client
 logger = logging.getLogger(__name__)
 
 
+_EARTH_RADIUS_KM = 6371.0
+
+
 def _haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    R = 6371.0
+    R = _EARTH_RADIUS_KM
     dlat = radians(lat2 - lat1)
     dlon = radians(lon2 - lon1)
     a = sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2
@@ -228,8 +231,10 @@ def generate_enforcement_plan(
     items: list[dict[str, Any]] = []
     for rank, (_, row) in enumerate(top.iterrows(), 1):
         zone_name = row.get("junction_proximity") or row.get("police_station") or row["h3_cell"]
-        if row.get("is_junction_cell"):
-            zone_name = f"H3 Zone near {row.get('police_station', 'Bengaluru')}"
+        h3_cell = row["h3_cell"]
+        if row.get("is_junction_cell") or (isinstance(zone_name, str) and zone_name == "No Junction"):
+            station = row.get("police_station", "Bengaluru")
+            zone_name = f"{station} ({h3_cell[-8:-5]})"
 
         trend = _compute_trend(df, row["h3_cell"], None)
         items.append(

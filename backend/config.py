@@ -15,13 +15,16 @@ PROPHET_CACHE_PATH = CACHE_DIR / "prophet_forecasts.pkl"
 PRODUCT_NAME = "ParkSentinel"
 API_HOST = "0.0.0.0"
 API_PORT = 8000
+# WARN: "*" allows any origin. Acceptable for a public read-only demo (no auth,
+# no cookies, no mutations from the browser). Remove before adding authentication
+# or any write endpoints exposed to untrusted callers.
 CORS_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:3001",
     "http://127.0.0.1:3001",
     "https://park-sentinel.vercel.app",
-    "*"  # Allow all for hackathon flexibility
+    "*",
 ]
 
 # Geographic bounds for Bengaluru
@@ -97,6 +100,9 @@ DEFAULT_HIGHWAY_WEIGHT = 0.5
 CIS_CRITICAL = 62
 CIS_HIGH = 48
 CIS_MODERATE = 32
+
+# Heatmap sampling cap — keeps /heatmap-data response under ~5 MB at 3 floats/point.
+HEATMAP_MAX_POINTS = 50_000
 
 # CIS colors (for reference)
 CIS_COLORS = {

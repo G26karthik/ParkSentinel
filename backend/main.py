@@ -26,7 +26,7 @@ from clustering import (
     h3_cell_to_geojson,
     run_hdbscan_clustering,
 )
-from config import CACHE_DIR, CORS_ORIGINS, H3_RESOLUTION, PRODUCT_NAME
+from config import CACHE_DIR, CORS_ORIGINS, H3_RESOLUTION, HEATMAP_MAX_POINTS, PRODUCT_NAME
 from data_loader import get_clean_violations_df, get_data_stats, load_csv_to_duckdb
 from enforcement import generate_enforcement_plan
 from forecaster import fit_prophet_forecasts, get_forecast, get_top_forecasts
@@ -384,7 +384,7 @@ def _resolve_zone_name(h3_cell: str, h3_df: pd.DataFrame) -> str:
     if row.get("is_junction_cell") or (isinstance(zone_name, str) and zone_name == 'No Junction'):
         # Append short h3 suffix so multiple cells in the same station area get unique names
         station = row.get('police_station', 'Bengaluru')
-        zone_name = f"{station} ({h3_cell[-5:]})"
+        zone_name = f"{station} ({h3_cell[-8:-5]})"
     return str(zone_name)
 
 
@@ -648,9 +648,8 @@ async def get_heatmap_data(
     if police_station:
         filtered = filtered[filtered["police_station"] == police_station]
 
-    max_points = 50000
-    if len(filtered) > max_points:
-        filtered = filtered.sample(n=max_points, random_state=42)
+    if len(filtered) > HEATMAP_MAX_POINTS:
+        filtered = filtered.sample(n=HEATMAP_MAX_POINTS, random_state=42)
 
     points = [
         {"lat": row["latitude"], "lon": row["longitude"], "weight": 1.0}

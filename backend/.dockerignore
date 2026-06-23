@@ -1,0 +1,12 @@
+.env
+.venv
+.venv311
+__pycache__
+*.pyc
+*.pyo
+.ruff_cache
+cache/
+*.pkl
+*.log
+debug-*.log
+.gitignore

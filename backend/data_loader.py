@@ -81,15 +81,6 @@ def load_csv_to_duckdb(
     db_path = db_path or DUCKDB_PATH
 
     if not csv_path.exists():
-        # #region agent log
-        import json, time
-        _log = {"sessionId": "d0259f", "hypothesisId": "H2-path", "location": "data_loader.py:load_csv_to_duckdb", "message": "CSV path missing", "data": {"csv_path": str(csv_path), "exists": False}, "timestamp": int(time.time() * 1000)}
-        try:
-            with open(Path(__file__).resolve().parent.parent / "debug-d0259f.log", "a", encoding="utf-8") as _f:
-                _f.write(json.dumps(_log) + "\n")
-        except Exception:
-            pass
-        # #endregion
         raise FileNotFoundError(f"CSV not found: {csv_path}")
 
     db_path.parent.mkdir(parents=True, exist_ok=True)

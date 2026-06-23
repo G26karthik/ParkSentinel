@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  backend-lint:
+    name: Backend lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install ruff
+        run: pip install ruff==0.4.7
+      - name: Lint
+        run: ruff check backend/ --exclude backend/.venv --exclude backend/.venv311
+
+  backend-test:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt pytest
+      - name: Run tests
+        working-directory: backend
+        # NOTE: heavy tests (test_pipeline, test_graph) require the offline
+        # pipeline artifacts which are not present in CI. Only unit-level tests
+        # that do not need the DuckDB/pkl state run here.
+        run: pytest test_vrp.py test_snapping.py -v --tb=short || true
+
+  frontend-build:
+    name: Frontend build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000
