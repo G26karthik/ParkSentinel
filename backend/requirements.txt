@@ -19,6 +19,7 @@ requests>=2.31.0
 python-dotenv>=1.0.0
 pydantic>=2.7.0
 shapely>=2.0.4
+fpdf2>=2.7.0
 
 # Optional GPU (RTX 4060): install via conda, not pip on Windows
 # conda install -c rapidsai -c conda-forge -c nvidia cuml=24.10 cuda-version=12.0

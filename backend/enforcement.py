@@ -21,6 +21,7 @@ from typing import Any
 import pandas as pd
 
 from config import PEAK_HOURS
+import mappls_client
 
 logger = logging.getLogger(__name__)
 
@@ -74,16 +75,24 @@ def solve_patrol_route(zones: list[dict]) -> dict:
             "route_optimized": False,
         }
 
-    # Build distance matrix (integers in meters for OR-Tools)
-    dist_km = [[0.0] * n for _ in range(n)]
-    for i in range(n):
-        for j in range(i + 1, n):
-            d = _haversine_km(
-                zones[i]["centroid_lat"], zones[i]["centroid_lon"],
-                zones[j]["centroid_lat"], zones[j]["centroid_lon"],
-            )
-            dist_km[i][j] = d
-            dist_km[j][i] = d
+    # Build distance matrix — try Mappls real road distances first, fall back to haversine
+    coords = [(z["centroid_lat"], z["centroid_lon"]) for z in zones]
+    mappls_matrix = mappls_client.distance_matrix(coords)
+    if mappls_matrix:
+        dist_km = mappls_matrix
+        distance_source = "mappls_road"
+        logger.info("Using Mappls real road distance matrix (%dx%d)", n, n)
+    else:
+        dist_km = [[0.0] * n for _ in range(n)]
+        for i in range(n):
+            for j in range(i + 1, n):
+                d = _haversine_km(
+                    zones[i]["centroid_lat"], zones[i]["centroid_lon"],
+                    zones[j]["centroid_lat"], zones[j]["centroid_lon"],
+                )
+                dist_km[i][j] = d
+                dist_km[j][i] = d
+        distance_source = "haversine"
 
     dist_matrix_m = [[int(dist_km[i][j] * 1000) for j in range(n)] for i in range(n)]
 
@@ -136,6 +145,7 @@ def solve_patrol_route(zones: list[dict]) -> dict:
         "naive_distance_km": round(naive_km, 2),
         "time_saved_pct": round(max(saved_pct, 0.0), 1),
         "route_optimized": route_optimized,
+        "distance_source": distance_source,
     }
 
 
@@ -260,4 +270,5 @@ def generate_enforcement_plan(
         "estimated_travel_km": route_result["total_distance_km"],
         "naive_travel_km": route_result["naive_distance_km"],
         "time_saved_pct": route_result["time_saved_pct"],
+        "distance_source": route_result.get("distance_source", "haversine"),
     }

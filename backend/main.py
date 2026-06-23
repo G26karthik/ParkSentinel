@@ -17,7 +17,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from anomaly_detector import detect_anomalies
 from clustering import (
@@ -44,6 +44,7 @@ from models import (
     TopForecastResponse,
 )
 from osm_enricher import enrich_h3_with_road_weights
+from pdf_generator import generate_patrol_pdf
 from query_engine import run_nl_query
 from scoring import score_clusters, score_h3_cells
 
@@ -432,6 +433,107 @@ async def get_enforcement_plan(
     df = _state.get("df", pd.DataFrame())
     plan = generate_enforcement_plan(h3_df, df, target_date, police_station, top_n)
     return EnforcementPlanResponse(**plan)
+
+
+@app.get("/enforcement-plan/pdf")
+async def get_enforcement_plan_pdf(
+    target_date: str | None = Query(None, alias="date"),
+    police_station: str | None = None,
+    top_n: int = Query(10, ge=1, le=50),
+):
+    """Download patrol enforcement brief as a PDF."""
+    h3_df = _state.get("h3_df", pd.DataFrame())
+    df = _state.get("df", pd.DataFrame())
+    plan = generate_enforcement_plan(h3_df, df, target_date, police_station, top_n)
+    pdf_bytes = generate_patrol_pdf(plan)
+    filename = f"patrol_brief_{plan.get('date', 'today')}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.get("/export/astram")
+async def export_astram(
+    target_date: str | None = Query(None, alias="date"),
+    police_station: str | None = None,
+    top_n: int = Query(10, ge=1, le=50),
+):
+    """
+    Export enforcement plan as GeoJSON FeatureCollection for ASTraM ingestion.
+    ASTraM is BTP's own AI traffic platform (Actionable Intelligence for
+    Sustainable Traffic Management). This endpoint provides the parking-enforcement
+    layer that ASTraM can overlay on its real-time situational awareness picture.
+    The dataset's data_sent_to_scita field is the existing BTP integration seam.
+    """
+    h3_df = _state.get("h3_df", pd.DataFrame())
+    df = _state.get("df", pd.DataFrame())
+    plan = generate_enforcement_plan(h3_df, df, target_date, police_station, top_n)
+
+    features = []
+    for item in plan.get("items", []):
+        lat = item.get("centroid_lat")
+        lon = item.get("centroid_lon")
+        if lat is None or lon is None:
+            continue
+        features.append({
+            "type": "Feature",
+            "geometry": {"type": "Point", "coordinates": [lon, lat]},
+            "properties": {
+                "zone_name": item.get("zone_name"),
+                "h3_cell": item.get("h3_cell"),
+                "cis": item.get("cis"),
+                "classification": item.get("classification"),
+                "rank": item.get("rank"),
+                "recommended_officers": item.get("recommended_officers"),
+                "recommended_shift": item.get("recommended_shift"),
+                "dominant_violation": item.get("dominant_violation"),
+                "dominant_vehicle": item.get("dominant_vehicle"),
+                "trend": item.get("trend"),
+                "police_station": item.get("police_station"),
+                "source": "ParkSentinel",
+                "astram_layer": "parking_enforcement",
+            },
+        })
+
+    # Route line if VRP was solved
+    route_items = plan.get("items", [])
+    route_coords = [
+        [item["centroid_lon"], item["centroid_lat"]]
+        for item in route_items
+        if item.get("centroid_lat") and item.get("centroid_lon")
+    ]
+    if len(route_coords) >= 2:
+        features.append({
+            "type": "Feature",
+            "geometry": {"type": "LineString", "coordinates": route_coords},
+            "properties": {
+                "type": "patrol_route",
+                "estimated_travel_km": plan.get("estimated_travel_km"),
+                "naive_travel_km": plan.get("naive_travel_km"),
+                "time_saved_pct": plan.get("time_saved_pct"),
+                "route_optimized": plan.get("route_optimized"),
+                "distance_source": plan.get("distance_source", "haversine"),
+                "source": "ParkSentinel",
+                "astram_layer": "parking_enforcement_route",
+            },
+        })
+
+    return {
+        "type": "FeatureCollection",
+        "features": features,
+        "metadata": {
+            "date": plan.get("date"),
+            "total_officers": plan.get("total_officers"),
+            "zones_count": plan.get("zones_count"),
+            "generated_by": "ParkSentinel",
+            "integration_note": (
+                "Parking enforcement intelligence for ASTraM overlay. "
+                "data_sent_to_scita field in source dataset is the existing BTP integration seam."
+            ),
+        },
+    }
 
 
 @app.get("/anomalies", response_model=AnomaliesResponse)

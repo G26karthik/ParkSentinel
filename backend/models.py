@@ -115,6 +115,7 @@ class EnforcementPlanResponse(BaseModel):
     estimated_travel_km: float = 0.0
     naive_travel_km: float = 0.0
     time_saved_pct: float = 0.0
+    distance_source: str = "haversine"
 
 
 class AnomalyRecord(BaseModel):
