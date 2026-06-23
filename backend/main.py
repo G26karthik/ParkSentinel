@@ -381,7 +381,9 @@ def _resolve_zone_name(h3_cell: str, h3_df: pd.DataFrame) -> str:
     row = match.iloc[0]
     zone_name = row.get("junction_proximity") or row.get("police_station") or h3_cell
     if row.get("is_junction_cell") or (isinstance(zone_name, str) and zone_name == 'No Junction'):
-        zone_name = f"H3 Zone near {row.get('police_station', 'Bengaluru')}"
+        # Append short h3 suffix so multiple cells in the same station area get unique names
+        station = row.get('police_station', 'Bengaluru')
+        zone_name = f"{station} ({h3_cell[-5:]})"
     return str(zone_name)
 
 

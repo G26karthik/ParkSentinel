@@ -14,7 +14,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Scatter,
   ComposedChart,
 } from "recharts";
 import {
@@ -187,27 +186,43 @@ export default function AnalyticsPage() {
       </div>
 
       <ChartCard title="Daily Violations with Anomaly Detection">
-        <ResponsiveContainer width="100%" height={320}>
-          <ComposedChart data={dailyWithAnomaly} margin={{ top: 10, right: 20, left: 5, bottom: 20 }}>
+        <ResponsiveContainer width="100%" height={420}>
+          <ComposedChart data={dailyWithAnomaly} margin={{ top: 10, right: 20, left: 10, bottom: 30 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis
               dataKey="violation_date"
               tick={{ fill: "#9ca3af", fontSize: 9 }}
               tickFormatter={(v) => v.slice(5)}
-              minTickGap={20}
+              minTickGap={14}
+              angle={-35}
+              textAnchor="end"
             />
-            <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} />
-            <Tooltip contentStyle={{ background: "#1f2937", border: "none" }} />
-            <Line type="monotone" dataKey="count" stroke="#60a5fa" strokeWidth={1.5} dot={false} />
-            <Scatter
+            <YAxis tick={{ fill: "#9ca3af", fontSize: 11 }} width={45} />
+            <Tooltip
+              contentStyle={{ background: "#1f2937", border: "1px solid #374151", borderRadius: 6 }}
+              labelFormatter={(v) => `Date: ${v}`}
+              formatter={(val, _name, props) => [val, props.payload?.isAnomaly ? "⚠ Anomaly" : "Violations"]}
+            />
+            <Line
+              type="monotone"
               dataKey="count"
-              fill="#ef4444"
-              shape="circle"
-              data={dailyWithAnomaly.filter((d) => d.isAnomaly)}
+              stroke="#60a5fa"
+              strokeWidth={1.5}
+              dot={(dotProps: Record<string, unknown>) => {
+                const { cx, cy, payload, key } = dotProps as { cx: number; cy: number; payload: { isAnomaly: boolean }; key: string };
+                if (payload.isAnomaly) {
+                  return <circle key={key} cx={cx} cy={cy} r={5} fill="#ef4444" stroke="#fca5a5" strokeWidth={1.5} />;
+                }
+                return <g key={key} />;
+              }}
+              activeDot={{ r: 4 }}
             />
           </ComposedChart>
         </ResponsiveContainer>
-        <p className="text-xs text-gray-500 mt-2">Red dots indicate anomaly dates (7-day rolling-baseline method)</p>
+        <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+          <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-0.5 bg-blue-400 rounded" /> Daily violations</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-red-500" /> Anomaly day (z-score &gt; 2σ)</span>
+        </div>
       </ChartCard>
     </div>
   );
