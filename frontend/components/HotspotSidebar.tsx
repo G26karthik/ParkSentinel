@@ -44,10 +44,14 @@ export default function HotspotSidebar({ feature, onClose }: HotspotSidebarProps
   const peakLabel = SHIFT_LABEL[p.peak_hour || 10] || `Around ${p.peak_hour}:00`;
   const officers = officersFor(p.classification);
   const station = p.police_station || "";
-  const zoneName = p.zone_name || station || (p.is_junction_cell ? "Junction Zone" : "Parking Zone");
+  // h3_cell[-8:-5] gives 3-char unique suffix like "b55" even when backend hasn't sent zone_name yet
+  const zoneId = p.h3_cell.slice(-8, -5).toUpperCase();
+  const zoneName = p.zone_name || station
+    ? `${p.zone_name || station}${p.zone_name ? "" : ` (${zoneId})`}`
+    : `Zone ${zoneId}`;
 
   return (
-    <div className="absolute right-4 top-20 bottom-4 w-80 bg-gray-900/97 backdrop-blur border border-gray-700 rounded-xl overflow-y-auto shadow-2xl z-10">
+    <div className="absolute right-4 top-20 bottom-4 w-80 bg-[#0f1117] border border-gray-700/80 rounded-xl overflow-y-auto shadow-2xl z-10">
       {/* Header */}
       <div className="p-4 border-b border-gray-800 flex justify-between items-start">
         <div>
@@ -138,7 +142,7 @@ export default function HotspotSidebar({ feature, onClose }: HotspotSidebarProps
         {/* Action buttons */}
         <div className="flex flex-col gap-2 pt-1">
           <Link
-            href={`/forecast?cell=${p.h3_cell}`}
+            href={`/forecast?cell=${p.h3_cell}${station ? `&station=${encodeURIComponent(station)}` : ""}`}
             className="block text-center bg-gray-800 hover:bg-gray-700 text-white text-sm py-2.5 rounded-lg transition-colors font-medium"
           >
             View 14-Day Forecast for this Zone →
