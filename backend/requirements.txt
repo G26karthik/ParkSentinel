@@ -1,5 +1,5 @@
 fastapi>=0.111.0
-uvicorn[standard]>=0.29.0
+uvicorn[standard]>=0.49.0
 duckdb>=0.10.0
 hdbscan>=0.8.38
 h3>=4,<5
