@@ -1,5 +1,11 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+// Mappls vector tile style — set NEXT_PUBLIC_MAPPLS_STYLE_URL in .env.local to activate.
+// Falls back to Carto dark-matter when not set.
+export const MAP_STYLE =
+  process.env.NEXT_PUBLIC_MAPPLS_STYLE_URL ||
+  "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+
 export interface SummaryStats {
   total_violations: number;
   total_approved: number;

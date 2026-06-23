@@ -11,7 +11,7 @@ function cleanJunctionName(name: string): string {
 }
 import Map from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { H3Feature, cisColor } from "@/lib/api";
+import { H3Feature, cisColor, MAP_STYLE } from "@/lib/api";
 
 const INITIAL_VIEW = {
   longitude: 77.5946,
@@ -132,7 +132,7 @@ export default function MapView({
         }
       >
         <Map
-          mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+          mapStyle={MAP_STYLE}
         />
       </DeckGL>
       {/* Click hint */}

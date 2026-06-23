@@ -5,7 +5,7 @@ import DeckGL from "@deck.gl/react";
 import { ScatterplotLayer, TextLayer, PathLayer } from "@deck.gl/layers";
 import Map from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { EnforcementItem, cisColor } from "@/lib/api";
+import { EnforcementItem, cisColor, MAP_STYLE } from "@/lib/api";
 
 const BENGALURU = { longitude: 77.5946, latitude: 12.9716, zoom: 10, pitch: 0, bearing: 0 };
 
@@ -162,7 +162,7 @@ export default function EnforcementMiniMap({ items, showRoute = false, naiveRout
   return (
     <div className="relative h-72 w-full rounded-xl overflow-hidden border border-gray-800">
       <DeckGL initialViewState={initialViewState} controller={true} layers={layers} style={{ position: "absolute", inset: 0 }}>
-        <Map mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json" />
+        <Map mapStyle={MAP_STYLE} />
       </DeckGL>
 
       {showRoute && naivePath.length > 1 && (
